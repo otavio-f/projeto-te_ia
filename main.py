@@ -11,7 +11,7 @@ import random
 from dataclasses import dataclass
 
 
-class Vector(dict):
+class Vector7(dict):
     """
     Define um vetor com índices nomeados
     """
