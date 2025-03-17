@@ -11,6 +11,33 @@ class VectorTestCase(unittest.TestCase):
     """
     Classe de teste de unidade de vetores
     """
+    def testTitle(self):
+        """Testa nome do vetor."""
+        v1 = Vector([], "teste")
+
+        result = v1.title
+        self.assertEqual(result, "teste")
+
+    def testLength(self):
+        """Testa cálculo do tamanho do vetor."""
+        v1 = Vector([1, 2, 3])
+
+        result = len(v1)
+        self.assertEqual(result, 3)
+
+    def testNoLength(self):
+        """Testa cálculo do tamanho do vetor com um vetor sem itens."""
+        v1 = Vector([])
+
+        result = len(v1)
+        self.assertEqual(result, 0)
+
+    def testMean(self):
+        """Testa cálculo da média do vetor."""
+        v1 = Vector([1, 2, 3])
+
+        result = v1.m
+        self.assertEqual(result, 2)
 
     def testAddVectorPlusVector(self):
         """Testa adição de dois vetores elemento a elemento."""
@@ -74,7 +101,3 @@ class VectorTestCase(unittest.TestCase):
         result = -v
         self.assertEqual(result, [-1, -2, -3])
         self.assertEqual(result, v * -1)
-
-
-if __name__ == "__main__":
-    unittest.main()

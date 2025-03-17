@@ -13,20 +13,44 @@ class Vector(object):
     Define um vetor de números inteiros ou de ponto flutuante
     """
 
-    def __init__(self, arr: list):
+    def __init__(self, arr: list, title: str=""):
         """
         Construtor
         :param arr: O array de dados
+        :param title: Um nome que descreve os dados
         """
-        self.__data__ = np.array(tuple(arr))
+        self.__data__ = np.array(arr)
+        self.__title = title
         
+    @property
+    def title(self) -> 'String':
+        """
+        O título do vetor
+        """
+        return self.__title
+
     @property
     def T(self) -> 'Vector':
         """
         Vetor transposto.
-        :returns: A transposição desse vetor
+        :returns: A transposição desse vetor.
         """
         return Vector(self.__data__.T)
+
+    @property
+    def m(self) -> float:
+        """
+        Calcula a média.
+        :returns: A média dos valores desse conjunto.
+        """
+        return np.mean(self.__data__)
+
+    def __len__(self) -> int:
+        """
+        Calcula o tamanho do vetor.
+        :returns: A quantidade de itens do vetor.
+        """
+        return len(self.__data__)
 
     def __str__(self):
         """
@@ -35,12 +59,17 @@ class Vector(object):
         """
         return str(self.__data__)
     
+    def __repr__(self) -> str:
+        return f"<Vector \"{self.title}\" with {len(self)} items>"
+
     def __iter__(self):
         """
         Itera sobre os elementos.
         :returns: Um iterador.
         """
-        return self.__data__.__iter__()
+        for i in self.__data__:
+            yield float(i)
+        # return self.__data__.__iter__()
     
     def __eq__(self, another: 'Vector | float') -> bool:
         """
