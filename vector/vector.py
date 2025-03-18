@@ -45,6 +45,14 @@ class Vector(object):
         """
         return np.mean(self.__data__)
 
+    def augment(self, end: int) -> 'Vector':
+        """
+        Retorna a versão aumentada desse vetor
+        :param end: Valor a ser adicionado ao final
+        :returns: Esse mesmo vetor com um zero ao final
+        """
+        return Vector(list(self)+[end])
+
     def __len__(self) -> int:
         """
         Calcula o tamanho do vetor.
@@ -60,7 +68,12 @@ class Vector(object):
         return str(self.__data__)
     
     def __repr__(self) -> str:
-        return f"<Vector \"{self.title}\" with {len(self)} items>"
+        if len(self) < 5:
+            vect = ", ".join(float(x) for x in self.__data__)
+        else:
+            vect = ", ".join(float(x) for x in list(self.__data__)[:5]) + ", ..."
+        return f"<{vect}>"
+        # return f"<Vector \"{self.title}\" with {len(self)} items: {vect}>"
 
     def __iter__(self):
         """

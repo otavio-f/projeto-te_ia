@@ -39,6 +39,13 @@ class VectorTestCase(unittest.TestCase):
         result = v1.m
         self.assertEqual(result, 2)
 
+    def testAugment(self):
+        """Testa vetor aumentado."""
+        v1 = Vector([1, 2, 3])
+
+        result = v1.augment(0)
+        self.assertEqual(list(result), [1.0, 2.0, 3.0, 0.0])
+
     def testAddVectorPlusVector(self):
         """Testa adição de dois vetores elemento a elemento."""
         v1 = Vector([1, 2, 3])
