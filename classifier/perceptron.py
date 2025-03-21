@@ -4,7 +4,7 @@ Classe classificadora Perceptron
 
 from dataclasses import dataclass
 from dataclasses import field
-from vector.vector import Vector
+from vector.vector import Vector, Equation
 import random
 
 @dataclass
@@ -13,7 +13,7 @@ class Perceptron:
     c1v: [Vector, ...] # vetores da classe 1
     c2v: [Vector, ...] # vetores da classe 2
 
-    def train(self, max_iters=1000) -> 'Callable[[float, ...], float], str, int':
+    def perceptron(self, max_iters=1000) -> 'Callable[[float, ...], float], str, int':
         w = Vector([0 for _ in self.c1v[0]]).augment(0) # vetor aumentado [..., 0]
         iters = 0
         err = True
@@ -44,3 +44,6 @@ class Perceptron:
             expression += f"{wl[k]}x{k+1}"
         expression += " - " if wl[-1] < 0 else " + " + f"{wl[-1]}"
         return function, expression, iters
+
+    def delta_perceptron(self) -> [Equation, int]:
+        pass

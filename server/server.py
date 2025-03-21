@@ -39,12 +39,17 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if(self.path in ("/", "/index.html")):
+            self.answer_html(200, "OK", os.path.join(os.path.abspath(os.curdir), 'server/res/index.html'))
+        elif(self.path == "/mindist"):
             self.answer_json(200, "OK", {"a":1, "b":2})
         else:
             self.answer_html(404, "Not Found", os.path.join(os.path.abspath(os.curdir), 'server/res/not_found.html'))
 
+    def do_POST(self):
+        print(self.path, self.rfile.read())
+        self.answer_plain(200, "OK", "NO")
 
-if __name__ == "__main__":
-    address = ('', 8000)
+def create_server(port: int) -> HTTPServer:
+    address = ('', port)
     httpd = HTTPServer(address, RequestHandler)
     httpd.serve_forever()
