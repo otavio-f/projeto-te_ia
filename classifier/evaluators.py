@@ -5,6 +5,9 @@ import math
 
 
 class ConfusionMatrix(object):
+    """
+    Matriz de confusão.
+    """
     def __init__(self, matrix:[[int, ...], ...]):
         self._matrix = matrix
         self._c = len(self._matrix)
@@ -60,13 +63,15 @@ class ConfusionMatrix(object):
         return part1 * part2
 
 
-    def __getitem__(self, i: int|str) -> [int, ...]:
+    def __getitem__(self, i: int|str) -> [int, ...]|int:
         """
         Obtém uma linha dessa matriz.
         :param i: Índice da linha ou coluna.
         Valores em string retornam colunas.
-        Valores terminados em "+" ou iniciados com "+" retornam o acumulado
-        Os valores "i+" e "+i" também são válidos.
+        Valores terminados em "+" retornam o acumulado parcial da linha, ex.: "5+"
+        Valores iniciados em "+" retornam o acumulado parcial da coluna, ex.: "+1"
+        "i+" retorna todos os acumulados parciais da linha
+        "+i" retorna todos os acumulados parciais da coluna
         """
         if type(i) is str:
             if i == "+i":
@@ -146,14 +151,24 @@ class ConfusionMatrix(object):
 
     def to_binary_matrix(self, ci: int) -> 'BinaryMatrix':
         """
-        Transforma essa matriz em uma matriz binária selecionando uma classe como base.
-        A matriz resultante indica como os elementos foram classificados em relação a uma classe.
+        Transforma essa matriz em uma matriz binária selecionando uma classe como referência.
+        A matriz resultante indica como os elementos foram classificados em relação a classe.
         :param ci: Indice começando em 0 da classe a ser selecionada.
         :returns: Uma matriz binária da classificação de uma classe em relação às outras.
         """
+        # Verdadeiro Positivo: diagonal principal (A11, A22, A33, ...)
         vp = sum(self[i][i] for i in range(self.c))
+
+        # Verdadeiro Negativo: itens da linha que não são da diagonal principal
+        # (A12, A22, A32, ...) na classe 1
         vn = sum(self[i][ci] for i in range(self.c) if i != ci)
+
+        # Falso Positivo: itens da coluna que não são da diagonal principal
+        # (A12, A13, A14, ...) na classe 1
         fp = sum(self[ci][i] for i in range(self.c) if i != ci)
+
+        # Falso Negativo: itens que não são da mesma linha, coluna ou diagonal principal
+        # (A23, A24, A32, ...) na classe 1
         fn = sum(self[i][j]
             for i in range(self.c)
             for j in range(self.c)
@@ -173,10 +188,10 @@ class BinaryMatrix(object):
         self._vn = vn
 
         m = vp+fp+fn+vn
-        self._Pr = vp / (vp + fp)
-        self._Re = vp / (vp + fn)
-        self._Es = vn / (fp + vn)
-        self._Ac = (vp + vn) / m
+        self._Pr = vp / (vp + fp) # Precisão
+        self._Re = vp / (vp + fn) # Sensibilidade
+        self._Es = vn / (fp + vn) # Especificidade
+        self._Ac = (vp + vn) / m # Acurácia
 
     @property
     def vp(self) -> int:
