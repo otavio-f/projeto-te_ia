@@ -40,7 +40,7 @@ def _get_term(i: int, xk: float, is_indep=False) -> str:
     return f"{sign}{mul}{term}"
 
 
-def euclidean_dist(v: Iterable[float, ...]) -> [Callable[[float, ...], float], str]:
+def euclidean_dist(v: Iterable[float]) -> [Callable[[float, ...], float], str]:
     """
     Calcula a equação de distância euclideana.
     :param v: O vetor característica.
@@ -67,7 +67,7 @@ def euclidean_dist(v: Iterable[float, ...]) -> [Callable[[float, ...], float], s
     return lambda x: math.sqrt((x - m).T * (x - m)), eq
 
 
-def max_dist(v: Iterable[float, ...]) -> [Callable[[float, ...], float], str]:
+def max_dist(v: Iterable[float]) -> [Callable[[float, ...], float], str]:
     """
     Calcula a equação de classificador máximo.
     :param v: O vetor característica.
@@ -84,7 +84,7 @@ def max_dist(v: Iterable[float, ...]) -> [Callable[[float, ...], float], str]:
     return lambda x: (Vector(x).T * m) - (1/2 * (m.T * m)), eq
 
 
-def dij(vi: Iterable[float, ...], vj: Iterable[float, ...]) -> [Callable[[float, ...], float], str]:
+def dij(vi: Iterable[float], vj: Iterable[float]) -> [Callable[[float, ...], float], str]:
     """
     Calcula a equação de superfície de decisão sobre duas classes
     :param vi: Vetor característica da classe i
@@ -104,7 +104,7 @@ def dij(vi: Iterable[float, ...], vj: Iterable[float, ...]) -> [Callable[[float,
     return lambda x: ((mi - mj).T * x) - 1/2 * ((mi - mj).T * (mi + mj)), eq
 
 
-def perceptron(c1v: Iterable[Vector, ...], c2v: Iterable[Vector, ...], max_iters=1_000_000, c=1) -> [Callable[[float, ...], float], str, int]:
+def perceptron(c1v: Iterable[float], c2v: Iterable[float], max_iters=1_000_000, c=1) -> [Callable[[float, ...], float], str, int]:
     """
     Calcula a equação sobre duas classes pelo método perceptron
     :param c1v: Conjunto de vetores de treinamento da classe 1
@@ -140,7 +140,7 @@ def perceptron(c1v: Iterable[Vector, ...], c2v: Iterable[Vector, ...], max_iters
     return lambda x: w * Vector(x).augment(1), eq, iters
 
 
-def delta_perceptron(c1v: [Vector, ...], c2v: [Vector, ...], max_iters=1_000_000, alpha=1) -> [Callable[[float, ...], float], str, int]:
+def delta_perceptron(c1v: [float], c2v: [float], max_iters=1_000_000, alpha=1) -> [Callable[[float, ...], float], str, int]:
     """
     Calcula a equação perceptron com regra delta sobre duas classes
     :param c1v: Conjunto de vetores de treinamento da classe 1
