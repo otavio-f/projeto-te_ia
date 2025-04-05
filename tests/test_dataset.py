@@ -4,9 +4,8 @@ Testes de unidade para módulo conjunto de dados
 
 import math
 import unittest
-from vector.vector import Vector
 from vector.dataset import DataSet
-
+import numpy as np
 
 class DatasetTestCase(unittest.TestCase):
     """
@@ -14,11 +13,11 @@ class DatasetTestCase(unittest.TestCase):
     """
     def testMean(self):
         """Testa cálculo da média do vetor."""
-        vs = [Vector([1, 2, 3]), Vector([0, 0, 0])]
-        d1 = DataSet(vs)
+        vs = [np.array([1, 2, 3]), np.array([0, 0, 0])]
+        d1 = DataSet(vs, ("a", "b"))
 
         result = d1.m
-        self.assertEqual(result, (2.0, 0.0))
+        self.assertTrue(np.array_equal(result, (2.0, 0.0)))
 
     """
     Classe de teste de unidade de conjunto de dados
@@ -26,11 +25,11 @@ class DatasetTestCase(unittest.TestCase):
     def testGetTrainingData(self):
         """Testa separação de dados em treino e teste."""
         vs = [
-            Vector([1, 2, 3, 4]),
-            Vector([0, 0, 0, 0]),
-            Vector([1, 10, 100, 1000])
+            np.array([1, 2, 3, 4]),
+            np.array([0, 0, 0, 0]),
+            np.array([1, 10, 100, 1000])
             ]
-        d1 = DataSet(vs)
+        d1 = DataSet(vs, ("a", "b", "c"))
 
         train, test = d1.get_training_data(0.5)
 

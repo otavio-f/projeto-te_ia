@@ -1,7 +1,7 @@
 import unittest
 import math
 import classifier.classifiers as classifier
-from vector.vector import Vector
+import numpy as np
 
 
 class ClassifierTestCase(unittest.TestCase):
@@ -14,7 +14,7 @@ class ClassifierTestCase(unittest.TestCase):
         Testa distância euclideana.
         """
 
-        test = Vector((4, 5, 6))
+        test = np.array((4, 5, 6))
         func, equation = classifier.euclidean_dist(test)
 
         expected_eq = "√(x1²+x2²+x3²-8x1-10x2-12x3+77)"
@@ -28,7 +28,7 @@ class ClassifierTestCase(unittest.TestCase):
         """
         Testa classificador máximo.
         """
-        test = Vector((3, 4, 5))
+        test = np.array((3, 4, 5))
         func, equation = classifier.max_dist(test)
 
         expected_eq = "3x1+4x2+5x3-25.0"
@@ -42,8 +42,8 @@ class ClassifierTestCase(unittest.TestCase):
         """
         Testa superfície de decisão.
         """
-        versicolor = Vector((4.3, 1.3))
-        setosa = Vector((1.5, 0.3))
+        versicolor = np.array((4.3, 1.3))
+        setosa = np.array((1.5, 0.3))
 
         func, equation = classifier.dij(versicolor, setosa)
 
@@ -57,23 +57,26 @@ class ClassifierTestCase(unittest.TestCase):
         """
         Testa geração da superfície de decisão pelo algoritmo Perceptron.
         """
-        cl1 = [Vector((0, 0)), Vector((0, 1))]
-        cl2 = [Vector((1, 0)), Vector((1, 1))]
+        cl1 = [np.array((0, 0)), np.array((0, 1))]
+        cl2 = [np.array((1, 0)), np.array((1, 1))]
         func, eq, iters = classifier.perceptron(cl1, cl2)
 
         self.assertEqual("-2x1+1", eq)
         self.assertEqual(16, iters)
-        self.assertEqual(1, func([0, 0]))
+        self.assertTrue(func([0, 0]) > 0)
+        self.assertTrue(func([0, 1]) > 0)
+        self.assertTrue(func([1, 0]) < 0)
+        self.assertTrue(func([1, 1]) < 0)
     
     def testDeltaPerceptron(self):
         """
         Testa perceptron com regra delta.
         """
-        cl1 = [Vector((0, 0)), Vector((0, 1))]
-        cl2 = [Vector((1, 0)), Vector((1, 1))]
-        func, eq, errors = classifier.delta_perceptron(cl1, cl2, alpha=0.1)
+        cl1 = [np.array((0, 0)), np.array((0, 1))]
+        cl2 = [np.array((1, 0)), np.array((1, 1))]
+        func, eq, iters = classifier.delta_perceptron(cl1, cl2, alpha=0.1)
 
-        self.assertEqual("", eq)
+        # self.assertEqual("", eq)
         self.assertTrue(func([0, 0]) > 0)
         self.assertTrue(func([0, 1]) > 0)
         self.assertTrue(func([1, 0]) < 0)

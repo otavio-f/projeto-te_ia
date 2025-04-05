@@ -7,19 +7,7 @@ from vector.vector import Vector
 from vector.dataset import DataExtractor
 import classifier.classifiers as classifier
 
-
-class InvalidClass(Exception):
-    """Lançada quando uma classe inválida for detectada."""
-    pass
-
-
-class InvalidDataset(Exception):
-    """Lançada quando um conjunto de dados inválido for detectada."""
-    pass
-
-class InvalidAlgorithm(Exception):
-    """Lançada quando um algoritmo não é válido."""
-    pass
+from server.errors import InvalidAlgorithm, InvalidClass, InvalidDataset
 
 
 @dataclass
@@ -27,7 +15,6 @@ class Controller(object):
     """Controlador da aplicação."""
 
     datasets: dict = field(default_factory=dict)
-    results: dict = field(default_factory=dict)
 
     @property
     def __new_id(self) -> str:
@@ -64,7 +51,18 @@ class Controller(object):
 
         return set_id
     
-    def get_datasets(self, dataset_id: str) -> dict|None:
+    def get_datasets(self) -> dict|None:
+        """
+        Recupera informação sobre todos os conjuntos de dados.
+        :returns: Os conjuntos de dados.
+        """
+        return {
+            key: data["info"]
+            for key, data in self.datasets.items()
+        }
+
+
+    def get_dataset(self, dataset_id: str) -> dict|None:
         """
         Recupera um conjunto de dados com o id especificado.
         :returns: O conjunto de dados ou None se não existir.
