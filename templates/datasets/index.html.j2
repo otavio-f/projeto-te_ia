@@ -1,0 +1,30 @@
+{% extends 'base.html.j2' %}
+
+{% block title %} Datasets {% endblock %}
+
+{% block content %}
+<section id="title">
+    <h1>Datasets</h1>
+</section>
+<section id="content">
+    {% if not datasets %}
+        <h2>Nenhum dataset encontrado.</h2>
+        <p>Não foi gerado nenhum dataset.</p>
+        <p>Clique <a href="{{ url_for('datasets.dataset_form') }}">aqui</a> para gerar um novo.</p>
+    {% else %}
+        <h2>Aqui estão os datasets gerados.</h2>
+        <p>Clique em um dataset para mais opções ou clique <a href="{{ url_for('datasets.dataset_form') }}">aqui</a> para gerar um novo.</p>
+        {% for ds in datasets %}
+            <section class="dataset">
+            {% for key, info in ds.items() %}
+                <p class="dataset-title">Dataset <a href="{{url_for('datasets.get_dataset', dsid=key)}}">{{ key }}</a></p>
+                <p>Porcentagem de treino: {{ (100*info['train_percent'])|round }}%</p>
+                <p>Porcentagem de teste: {{ (100 * (1 - info['train_percent']))|round }}%</p>
+                <p>Colunas selecionadas: {{ ', '.join(info['columns'])}}</p>
+                <p></p>
+            {% endfor %}
+            </section>
+        {% endfor %}
+    {% endif %}
+</section>
+{% endblock %}

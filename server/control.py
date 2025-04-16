@@ -3,8 +3,8 @@ import random
 from dataclasses import dataclass
 from dataclasses import field
 
-from vector.vector import Vector
 from vector.dataset import DataExtractor
+from vector.dataset import DataSet
 import classifier.classifiers as classifier
 
 from server.errors import InvalidAlgorithm, InvalidClass, InvalidDataset
@@ -20,12 +20,12 @@ class Controller(object):
     def __new_id(self) -> str:
         """
         Cria um novo id.
-        :returns: um id de 8 algarismos hexadecimais aleatório.
+        :returns: um id de 8 algarismos hexadecimais aleatórios.
         """
         new_id = random.choices("abcdef1234567890", k=8)
         return "".join(new_id)
 
-    def gen_datasets(self, train_percent: float, columns: [str, ...], src="data/Iris.csv"):
+    def gen_dataset(self, train_percent: float, columns: [str, ...], src="data/Iris.csv"):
         """
         Gera um conjunto de dados.
         :param train_percent: A porcentagem de dados a serem separados para treino
@@ -41,7 +41,10 @@ class Controller(object):
         
         set_id = self.__new_id
         self.datasets[set_id] = {
-            "info": {"columns": columns},
+            "info": {
+                "columns": columns,
+                "train_percent": train_percent
+            },
             "dataset": {
                 "setosa": {"train": se_train, "test": se_test},
                 "versicolor": {"train": ve_train, "test": ve_test},
@@ -56,10 +59,10 @@ class Controller(object):
         Recupera informação sobre todos os conjuntos de dados.
         :returns: Os conjuntos de dados.
         """
-        return {
-            key: data["info"]
+        return [
+            {key: data["info"]}
             for key, data in self.datasets.items()
-        }
+        ]
 
 
     def get_dataset(self, dataset_id: str) -> dict|None:
@@ -68,16 +71,79 @@ class Controller(object):
         :returns: O conjunto de dados ou None se não existir.
         """
         if not dataset_id in self.datasets:
-            raise InvalidDataset("Dataset not found")
+            raise InvalidDataset
 
         result = self.datasets[dataset_id.lower()]["dataset"]
+        info = self.datasets[dataset_id.lower()]["info"]
+        # todo: retornar dataset inteiro
         return {
+            "info":info,
+            "dataset": {
             c: {
                 "m" : result[c]["train"].m,
-                "test" : list(zip(*result[c]["test"].columns))
+                "test" : list(result[c]["test"].lines)
             }
+            for c in ("setosa", "versicolor", "virginica")}
+        }
+
+
+    def calc_euc(self, dataset: dict, class_name: str) -> dict:
+        """
+        Calcula a distância euclideana do conjunto de dados de teste e a classe.
+        :param dataset_id: o id do conjunto de dados
+        :param class_name: o nome da classe
+        :returns: Um dicionário com a equação e os resultados dos testes.
+        """
+        m = dataset[class_name]["train"].m
+
+        func, eq = classifier.euclidean_dist(m)
+        results = {
+            c : [{"class": c, "data": sample, "result": func(sample)} for sample in dataset[c]["test"].lines]
             for c in ("setosa", "versicolor", "virginica")
         }
+
+        return {
+            "equation": eq,
+            "result": results
+        }
+
+    def euclidean_distance2(self, dataset_id: str) -> dict:
+        """
+        Calcula a distância euclideana do conjunto de dados de teste e as classes.
+        :param dataset_id: o id do conjunto de dados
+        :param class_name: o nome da classe
+        :returns: Um dicionário com a equação e os resultados dos testes.
+        :raises ValueError: se o nome da classe não for válido
+        """
+        if not dataset_id.lower() in self.datasets:
+            raise InvalidDataset("Dataset not found")
+        
+        dataset = self.datasets[dataset_id.lower()]["dataset"]
+        classes = ("setosa", "versicolor", "virginica")
+
+        dists = dict()
+        for c in classes:
+            func, eq = classifier.euclidean_dist(dataset[c]["train"].m)
+            dists[c] = {"function": func, "equation": eq}
+        
+        results = [{
+            "original_class": c,
+            "data": sample,
+            "result_class": min(classes, key=lambda c: dists[c]["function"](sample))
+            }
+            for c in classes
+            for sample in dataset[c]["test"].lines
+        ]
+
+        results = {
+            "equations": {
+                c: dists[c]["equation"]
+                for c in classes
+            },
+            "results": results
+        }
+
+        return results
 
 
     def euclidean_distance(self, dataset_id: str, class_name: str) -> dict:
@@ -98,13 +164,13 @@ class Controller(object):
 
         func, eq = classifier.euclidean_dist(m1)
         results = {
-            c : [{"data": sample, "result": func(Vector(sample))} for sample in zip(*dataset[c]["test"].columns)]
+            c : [{"class": c, "data": sample, "result": func(sample)} for sample in dataset[c]["test"].lines]
             for c in ("setosa", "versicolor", "virginica")
         }
 
         return {
-            "eq": eq,
-            "test_result": results
+            "equation": eq,
+            "result": results
         }
 
 
@@ -121,14 +187,19 @@ class Controller(object):
         if not class_name in self.datasets[dataset_id]["dataset"]:
             raise InvalidClass("Invalid class name")
 
-        dataset = self.datasets[dataset_id.lower()]["dataset"]
+        dataset: DataSet = self.datasets[dataset_id.lower()]["dataset"]
         m1 = dataset[class_name]["train"].m
 
         func, eq = classifier.max_dist(m1)
         results = {
-            c : [{"data": sample, "result": func(sample)} for sample in zip(*dataset[c]["test"].columns)]
+            c: [{"data": sample, "result":func(sample)} for sample in dataset[c]["test"].lines]
             for c in ("setosa", "versicolor", "virginica")
         }
+
+        # results = {
+        #     c : [{"data": sample, "result": func(sample)} for sample in zip(*dataset[c]["test"].columns)]
+        #     for c in ("setosa", "versicolor", "virginica")
+        # }
 
         return {
             "eq": eq,
@@ -158,7 +229,7 @@ class Controller(object):
 
         func, eq = classifier.dij(m1, m2)
         results = {
-            c : [{"data": sample, "result": func(sample)} for sample in zip(*dataset[c]["test"].columns)]
+            c : [{"data": sample, "result": func(sample)} for sample in dataset[c]["test"].lines]
             for c in ("setosa", "versicolor", "virginica")
         }
 
@@ -185,12 +256,12 @@ class Controller(object):
             raise InvalidClass("Invalid class name")
 
         dataset = self.datasets[dataset_id.lower()]["dataset"]
-        c1v = [Vector.of(*k) for k in zip(*dataset[c1]["train"].columns)]
-        c2v = [Vector.of(*k) for k in zip(*dataset[c2]["train"].columns)]
+        c1v = dataset[c1]["train"].lines
+        c2v = dataset[c2]["train"].lines
 
         func, eq, iters = classifier.perceptron(c1v, c2v)
         results = {
-            c : [{"data": sample, "result": func(sample)} for sample in zip(*dataset[c]["test"].columns)]
+            c : [{"data": sample, "result": func(sample)} for sample in dataset[c]["test"].lines]
             for c in ("setosa", "versicolor", "virginica")
         }
 
@@ -220,14 +291,14 @@ class Controller(object):
             raise InvalidClass("Invalid class name")
 
         dataset = self.datasets[dataset_id.lower()]["dataset"]
-        c1v = [Vector.of(*k) for k in zip(*dataset[c1]["train"].columns)]
-        c2v = [Vector.of(*k) for k in zip(*dataset[c2]["train"].columns)]
+        c1v = dataset[c1]["train"].lines
+        c2v = dataset[c2]["train"].lines
 
         func, eq, iters = classifier.delta_perceptron(c1v, c2v)
         # TODO: Reduzir o delta quando soltar erro ou receber delta como argumento?
 
         results = {
-            c : [{"data": sample, "result": func(sample)} for sample in zip(*dataset[c]["test"].columns)]
+            c : [{"data": sample, "result": func(sample)} for sample in dataset[c]["test"].lines]
             for c in ("setosa", "versicolor", "virginica")
         }
 

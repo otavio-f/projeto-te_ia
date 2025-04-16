@@ -131,8 +131,8 @@ class DataExtractor:
                 if row[class_index] != class_name:
                     continue
                 # adiciona dados às colunas selecionadas pelo argumento
-                for i in columns_index:
-                    all_rows[i].append(row[i])
+                for i, ci in enumerate(columns_index):
+                    all_rows[i].append(row[ci]) # BUG: all_rows tem menos colunas que columns_index
 
             # filtra e opcionalmente converte as colunas obtidas
             if conversor is None: # não tem conversor

@@ -1,0 +1,37 @@
+{% extends 'base.html.j2' %}
+
+{% block title %} Datasets {% endblock %}
+
+{% block content %}
+<section id="title">
+    <h1>Resultado da classificação</h1>
+</section>
+<section id="content">
+    {% for class in ("setosa", "versicolor", "virginica") %}
+    <section class="dataset">
+        <h1 class="species-name">Classe <em class="species-marker">Iris {{ class }}</em></h1>
+        <p>Equação de distância: {{ data['equations'][class] }}</p>
+    </section>
+    {% endfor %}
+    <section class="dataset">
+        <h1>Resultados da classificação</h1>
+        {% for result in data['results'] %}
+            <p>Dado: {{ result['data'] }} </p>
+            <p>Classe original: <em class="species-marker">Iris {{ result['original_class'] }}</em></p>
+            <p>Classificado em: <em class="species-marker">Iris {{ result['result_class'] }}</em></p>
+        {% endfor %}
+    </section>
+    
+</section>
+<style>
+    .species-name {
+        margin-bottom: .5rem;
+    }
+
+    .species-marker {
+        text-transform: capitalize;
+        font-style: italic;
+    }
+
+</style>
+{% endblock %}

@@ -1,0 +1,8 @@
+Copyright
+
+Iris setosa image can be found @ https://www.flickr.com/photos/mmmavocado/4337131055
+  Taken by Malcolm Manners @ Flickr
+  Copyright CC2.0 https://creativecommons.org/licenses/by/2.0/
+
+Numpy logo can be found @ https://icon-icons.com/es/icono/numpy-logo/248343
+  Copyright Zero 1.0 https://creativecommons.org/publicdomain/zero/1.0/

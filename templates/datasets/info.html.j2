@@ -1,0 +1,89 @@
+{% extends 'base.html.j2' %}
+
+{% block title %} Datasets {% endblock %}
+
+{% block content %}
+<section id="title">
+    <h1>Dataset {{ name }}</h1>
+</section>
+<section id="content">
+    <article class="dataset">
+        <p>Porcentagem de treino: {{ (100*data['info']['train_percent'])|round }}% </p>
+        <p>Porcentagem de teste:  {{ (100*(1-data['info']['train_percent']))|round }}% </p>
+    </article>
+    <article class="dataset">
+        <p>Colunas selecionadas:</p>
+        {{ ','.join(data['info']['columns']) }}
+    </article>
+    {% for species in ['setosa', 'versicolor', 'virginica'] %}
+        <article class="dataset">
+            <p class="species-name">Classe <span class="species-marker">iris {{ species }}</span></p>
+            <p>Vetor característica: {{ data['dataset'][species]['m'] }}</p>
+            <p>Usados em teste: {{ data['dataset'][species]['test'].__len__() }} elementos</p>
+            <p>Usados em treino: {{ 50 - data['dataset'][species]['test'].__len__() }} elementos</p>
+        </article>
+    {% endfor %}
+    <section id="classifier-selection">
+        <div class="classifier-title">
+            <i class="fa-solid fa-bars-staggered"></i>
+            <h1>Classificadores:</h1>
+        </div>
+        <ul>
+            <li class="classifier">
+                <i class="fa-solid fa-ruler-combined"></i>
+                <a href="{{ url_for('classifiers.euclidean_dist', id=name)}}">Distância Euclideana</a>
+            </li>
+            <li class="classifier">
+                <i class="fa-solid fa-arrows-up-to-line"></i>
+                <a href="{{ url_for('classifiers.maximum')}}">Máximo</a>
+            </li>
+            <li class="classifier">
+                <i class="fa-solid fa-chart-line"></i>
+                <a href="{{ url_for('classifiers.dij')}}">Superfície de Decisão</a>
+            </li>
+            <li class="classifier">
+                <i class="fa-solid fa-hexagon-nodes"></i>
+                <a href="{{ url_for('classifiers.perceptron')}}">Perceptron</a>
+            </li>
+            <li class="classifier">
+                <i class="fa-solid fa-hexagon-nodes-bolt"></i>
+                <a href="{{ url_for('classifiers.perceptron_delta')}}">Perceptron Regra Delta</a>
+            </li>
+        </ul>
+    </section>
+    <a href="{{ url_for('datasets.dataset_home') }}">&lt;&lt; Voltar</a>
+</section>
+<style>
+    .species-name {
+        padding-bottom: 0.5rem;
+    }
+
+    .species-marker {
+        font-style: italic;
+        text-transform: capitalize;
+    }
+
+    .fa-solid {
+        padding-right: 1rem;
+    }
+
+    #classifier-selection {
+        padding: 1rem;
+    }
+
+    #classifier-selection h1 {
+        margin-bottom: 1rem;
+        font-weight: 800;
+    }
+
+    .classifier-title {
+        display: flex;
+    }
+
+    .classifier {
+        margin-bottom: 1rem;
+        list-style-type: none;
+    }
+
+</style>
+{% endblock %}
