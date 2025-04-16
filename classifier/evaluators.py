@@ -8,7 +8,7 @@ class ConfusionMatrix(object):
     """
     Matriz de confusão.
     """
-    def __init__(self, matrix:[[int, ...], ...]):
+    def __init__(self, matrix: list[list[int]]):
         self._matrix = matrix
         self._c = len(self._matrix)
         for line in self._matrix:
@@ -63,7 +63,7 @@ class ConfusionMatrix(object):
         return part1 * part2
 
 
-    def __getitem__(self, i: int|str) -> [int, ...]|int:
+    def __getitem__(self, i: int|str) -> list[int]|int:
         """
         Obtém uma linha dessa matriz.
         :param i: Índice da linha ou coluna.
@@ -102,7 +102,7 @@ class ConfusionMatrix(object):
         return self._matrix[i]
 
     @property
-    def columns(self) -> [[int, ...], ...]:
+    def columns(self) -> list[list[int]]:
         """
         Troca linhas por colunas da matriz de confusão.
         :returns: A matriz de confusão transposta.
