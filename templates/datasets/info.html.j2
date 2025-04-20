@@ -8,19 +8,19 @@
 </section>
 <section id="content">
     <article class="dataset">
-        <p>Porcentagem de treino: {{ (100*data['info']['train_percent'])|round }}% </p>
-        <p>Porcentagem de teste:  {{ (100*(1-data['info']['train_percent']))|round }}% </p>
+        <p>Porcentagem de treino: {{ (100*data.train_percent)|round }}% </p>
+        <p>Porcentagem de teste:  {{ (100*(1-data.train_percent))|round }}% </p>
     </article>
     <article class="dataset">
         <p>Colunas selecionadas:</p>
-        {{ ','.join(data['info']['columns']) }}
+        {{ ','.join(data.columns) }}
     </article>
     {% for species in ['setosa', 'versicolor', 'virginica'] %}
         <article class="dataset">
             <p class="species-name">Classe <span class="species-marker">iris {{ species }}</span></p>
-            <p>Vetor característica: {{ data['dataset'][species]['m'] }}</p>
-            <p>Usados em teste: {{ data['dataset'][species]['test'].__len__() }} elementos</p>
-            <p>Usados em treino: {{ 50 - data['dataset'][species]['test'].__len__() }} elementos</p>
+            <p>Vetor característica: {{ data.get_trainset(species).m }}</p>
+            <p>Usados em teste: {{ data.get_trainset(species).length }} elementos</p>
+            <p>Usados em treino: {{ 50 - data.get_trainset(species).length }} elementos</p>
         </article>
     {% endfor %}
     <section id="classifier-selection">

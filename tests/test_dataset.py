@@ -2,10 +2,10 @@
 Testes de unidade para módulo conjunto de dados
 """
 
-import math
 import unittest
-from vector.dataset import DataSet
+from dataset import DataSet
 import numpy as np
+
 
 class DatasetTestCase(unittest.TestCase):
     """

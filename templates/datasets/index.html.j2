@@ -16,13 +16,10 @@
         <p>Clique em um dataset para mais opções ou clique <a href="{{ url_for('datasets.dataset_form') }}">aqui</a> para gerar um novo.</p>
         {% for ds in datasets %}
             <section class="dataset">
-            {% for key, info in ds.items() %}
-                <p class="dataset-title">Dataset <a href="{{url_for('datasets.get_dataset', dsid=key)}}">{{ key }}</a></p>
-                <p>Porcentagem de treino: {{ (100*info['train_percent'])|round }}%</p>
-                <p>Porcentagem de teste: {{ (100 * (1 - info['train_percent']))|round }}%</p>
-                <p>Colunas selecionadas: {{ ', '.join(info['columns'])}}</p>
-                <p></p>
-            {% endfor %}
+                <p class="dataset-title">Dataset <a href="{{url_for('datasets.get_dataset', dsid=ds.id)}}">{{ ds.id }}</a></p>
+                <p>Porcentagem de treino: {{ (100*ds.train_percent)|round }}%</p>
+                <p>Porcentagem de teste: {{ (100 * (1 - ds.train_percent))|round }}%</p>
+                <p>Colunas selecionadas: {{ ', '.join(ds.columns)}}</p>
             </section>
         {% endfor %}
     {% endif %}

@@ -1,10 +1,13 @@
-from typing import Tuple
+"""
+Manipulação de dados vetores e tabulares
+:author: Otavio
+"""
+
 from typing import Any
 from typing import Callable
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import csv
-import random
 import os
 import math
 import numpy as np
@@ -15,8 +18,8 @@ class DataSet:
     """
     Representa um conjunto de dados
     """
-    __columns: Tuple[np.ndarray, ...]
-    column_titles: Tuple[str, ...]
+    __columns: list[np.ndarray]
+    column_titles: list[str]
 
     def __post_init__(self):
         """
@@ -30,11 +33,13 @@ class DataSet:
         length = self.__columns[0].shape
         assert all(col.shape == length for col in self.__columns), "Mismatched columns!"
 
-    def __getitem__(self, i: 'str|int'):
+    def __getitem__(self, i: 'str|int') -> np.ndarray:
         """
-        Obtém um item do conjunto através do nome ou do índice.
-        :param i: Índice ou nome do vetor
-        :returns: O vetor ou ValueError se não houver vetor com nome ou índice válido
+        Obtém uma coluna do conjunto através do nome ou do índice.
+
+        :param i: Índice ou nome da coluna
+        :returns: A coluna com o título ou o índice especificado
+        :raises: ValueError se a coluna não for válida ou nenhuma coluna com o nome especificado existir
         """
         if type(i) is int:
             return self.__columns[i]
@@ -51,6 +56,8 @@ class DataSet:
     def columns(self) -> np.ndarray:
         """
         Obtém as colunas desse conjunto de dados.
+
+        :returns: As colunas desse dataset
         """
         # retorna c colunas com n elementos cada
         # [
@@ -65,6 +72,8 @@ class DataSet:
     def lines(self) -> np.ndarray:
         """
         Obtém as linhas desse conjunto de dados.
+
+        :returns: Cada linha desse dataset, corresponde a todos os vetores.
         """
         # retorna o n elemento de cada coluna em c colunas
         # [
@@ -79,33 +88,34 @@ class DataSet:
     def m(self) -> np.ndarray:
         """
         Calcula a média de todas as colunas.
+
         :returns: A média de cada vetor desse conjunto de dados.
         """
         return np.fromiter((col.mean() for col in self.__columns), np.single)
 
-    def get_training_data(self, percentage: float) -> Tuple['DataSet', 'DataSet']:
+    def get_training_data(self, percentage: float) -> tuple['DataSet', 'DataSet']:
         """
         Separa o conjunto de dados para treino e teste.
         :param percentage: A porcentagem a ser destinada a testes.
         :returns: Dois conjuntos de dados, um para treino e outro para testes.
         """
-        # determina ponto de corte entre treinamento e teste
-        cut_point = math.floor(len(self.__columns[0]) * percentage)
-
         # mistura linhas
         lines = self.lines
         rng = np.random.default_rng()
         rng.shuffle(lines)
         
+        # determina ponto de corte entre treinamento e teste
+        cut_point = math.floor(len(self.__columns[0]) * percentage)
+
         # separa treino e teste
         train = lines[:cut_point] # treino: de 0 ao ponto de corte
         test = lines[cut_point:] # teste: do ponto de corte ao final
         
-        # transforma linhas em colunas
+        # cria os datasets, transformando linhas em colunas
         trainset = DataSet(tuple(train.T), self.column_titles)
         testset = DataSet(tuple(test.T), self.column_titles)
 
-        # retorna resultados
+        # retorna datasets
         return trainset, testset
 
 
@@ -113,26 +123,39 @@ class DataSet:
 class DataExtractor:
     src: os.PathLike
 
-    def extract_by_class(self, class_column: str, class_name: str, data_columns: Tuple[str, ...], conversor: Callable[[str], Any]=None) -> DataSet:
+    def extract_by_class(self, class_column: str, class_name: str, data_columns: list[str], conversor: Callable[[Any], Any]|None=None) -> DataSet:
+        """
+        Extrai um dataset a partir de um arquivo.
+        
+        :params class_column: O nome da coluna que contém as classes.
+        :params class_name: A classe desejada.
+        :params data_columns: As colunas a serem extraídas.
+        :params conversor: Função de transformação de dados.
+        :returns: Um dataset contendo as colunas selecionadas, com os dados convertidos pela função de transformação.
+        :raises ValueError: Se a lista de colunas a serem extraídas for vazia.
+        """
+        if not data_columns:
+            raise ValueError("Não foram especficadas colunas!")
+        
         with open(self.src, mode='r', newline='') as fp:
             reader = csv.reader(fp)
 
             # cabeçalhos
             headers = next(reader)
             
-            # extrai índices dos cabeçalhos
+            # extrai índices dos cabeçalhos para filtragem de colunas
             columns_index = tuple(headers.index(name) for name in data_columns) # colunas selecionadas
             class_index = headers.index(class_column) # coluna da classe
 
             # filtra linhas e colunas
             all_rows = tuple([] for _ in columns_index)
             for row in reader:
-                # descarta linhas das classes erradas
+                # descarta linhas de outras classes
                 if row[class_index] != class_name:
                     continue
-                # adiciona dados às colunas selecionadas pelo argumento
+                # seleciona somente colunas desejadas
                 for i, ci in enumerate(columns_index):
-                    all_rows[i].append(row[ci]) # BUG: all_rows tem menos colunas que columns_index
+                    all_rows[i].append(row[ci])
 
             # filtra e opcionalmente converte as colunas obtidas
             if conversor is None: # não tem conversor

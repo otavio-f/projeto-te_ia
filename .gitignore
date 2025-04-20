@@ -6,4 +6,3 @@ lib64/
 lib64
 __pycache__/
 share/
-tests.py
