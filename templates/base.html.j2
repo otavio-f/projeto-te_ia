@@ -20,10 +20,92 @@
     />
     <!-- estilos -->
     <link rel="stylesheet" href="{{url_for('static', filename='reset.css')}}" />
-    <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}" />
+    <!-- estilos globais -->
+    <style>
+      body {
+        background-color: #fdf;
+        font-family: "IBM Plex Mono", sans-serif, monospace;
+        font-style: normal;
+      }
+
+      #banner {
+        background-image: url("/static/4337131055_75ecfbbde6_o.jpg");
+        background-repeat: no-repeat;
+        background-position-y: 50%;
+        background-size: 110%;
+        background-color: #777;
+        background-blend-mode: multiply;
+        padding: 1em;
+      }
+
+      #banner h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        padding: 3em;
+        color: #fff;
+      }
+
+      nav ul {
+        display: flex;
+        justify-content: space-evenly;
+      }
+
+      nav ul li {
+        padding-right: 1em;
+      }
+
+      nav ul li a {
+        color: #f8f;
+      }
+
+      main {
+        padding: 1rem;
+        min-height: 100vh;
+      }
+
+      footer {
+        background-color: #787;
+        color: #fff;
+        padding: 3em;
+      }
+
+      footer h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+      }
+
+      article header h1 {
+        font-size: 1.5rem;
+        padding-top: 1rem;
+      }
+
+      section {
+        padding: 1em 1em;
+        margin: 1em 0 1em 0;
+        border: 1px #999 solid;
+        border-radius: 8px;
+      }
+
+      section h1 {
+        font-weight: bolder;
+        padding-bottom: 0.5em;
+      }
+
+      em {
+        font-style: italic;
+      }
+
+      p {
+        line-height: 1.25;
+      }
+
+      .capitalized {
+          text-transform: capitalize;
+      }
+    </style>
   </head>
   <body>
-    <header>
+    <header id="banner">
       <h1 id="announce">Tópicos Especiais em Inteligência Artificial</h1>
       <nav>
         <ul>
@@ -31,9 +113,7 @@
             <a href="{{url_for('datasets.dataset_home')}}">Datasets</a>
           </li>
           <li>
-            <a href="{{url_for('classifiers.classifier_home')}}"
-              >Classificadores</a
-            >
+            <a href="{{url_for('classifiers.classifier_home')}}">Classificadores</a>
           </li>
         </ul>
       </nav>

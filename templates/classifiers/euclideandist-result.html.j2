@@ -1,44 +1,34 @@
 {% extends 'base.html.j2' %}
 
-{% block title %} Datasets {% endblock %}
+{% block title %} Distância mínima {% endblock %}
 
 {% block content %}
-<section id="title">
-    <h1>Classificador de distância euclideana</h1>
-</section>
-<article id="content">
-    <h2 class="title">Distâncias das classes</h2>
+<article>
+    <header>
+        <h1><i class="fa-solid fa-subscript"></i> Equações de distância</h1>
+    </header>
     {% for cls in ("setosa", "versicolor", "virginica") %}
-    <section class="dataset">
-        <h1 class="species-name">Classe <em class="species-marker">Iris {{ cls }}</em></h1>
-        <p>Equação de distância: {{ data.classifier[cls].eq }}</p>
+    <section>
+        <h1>Classe <em class="capitalized">Iris {{ cls }}</em></h1>
+        <p>Equação: {{ data.classifier[cls].eq }}</p>
     </section>
     {% endfor %}
-    <h2 class="title">Resultados da classificação</h2>
-        {% for test in data.tests %}
-        <section class="dataset">
-            <p>Dado: {{ test.data }} </p>
-            <p>Classe esperada: <em class="species-marker">Iris {{ test.expected }}</em></p>
-            <p>Classe prevista: <em class="species-marker">Iris {{ test.predicted }}</em></p>
-            <p>Distância: {{ test.value }}</em></p>
-        </section>
-        {% endfor %}
-    <a href="{{ url_for('datasets.dataset_home') }}">&lt;&lt; Voltar</a>
 </article>
-<style>
-    .title {
-        font-size: 1.25em;
-        font-weight: bolder;
-        text-decoration: underline;
-    }
 
-    .species-name {
-        margin-bottom: .5rem;
-    }
-
-    .species-marker {
-        text-transform: capitalize;
-        font-style: italic;
-    }
-</style>
+<article>
+    <header>
+        <h1><i class="fa-solid fa-square-poll-horizontal"></i> Resultados da classificação</h1>
+    </header>
+    {% for test in data.tests %}
+    <section>
+        <h1>Vetor [{{ test.data|join(', ') }}]</h1>
+        <p>Classe esperada: <em class="capitalized">Iris {{ test.expected }}</em></p>
+        <p>Classe prevista: <em class="capitalized">Iris {{ test.predicted }}</em></p>
+        <p>Distância: {{ test.value }}</p>
+    </section>
+    {% endfor %}
+</article>
+<nav>
+    <a href="{{url_for('datasets.get_dataset', dsid=dataset)}}"">&lt;&lt; Voltar</a>
+</nav>
 {% endblock %}

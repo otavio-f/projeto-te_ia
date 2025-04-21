@@ -3,35 +3,42 @@
 {% block title %} Datasets {% endblock %}
 
 {% block content %}
-<section id="title">
-    <h1>Novo dataset</h1>
-</section>
-<section id="content">
-    <form id="new-dataset">
-        <div class="form-group">
-            <p>Porcentagem de teste/treino:</p>
-            <span>
-                <i class="fa-solid fa-flask"></i>
-                <span id="test_status">30%</span>
-            </span>
-            <input type="range" id="train_percent" name="train_percent" min="1" max="99" value="70" />
-            <span>
-                <span id="train_status">70%</span>
-                <i class="fa-solid fa-dumbbell"></i>
-            </span>
-        </div>
+<article>
+    <header>
+        <h1>Novo dataset</h1>
+    </header>
+        <section>
+            <form id="new-dataset">
+                <div class="form-group">
+                    <h1><i class="fa-solid fa-percent"></i> Porcentagem de teste/treino</h1>
+                    <span>
+                        <i class="fa-solid fa-flask"></i>
+                        <span id="test_status">30%</span>
+                    </span>
+                    <input type="range" id="train_percent" name="train_percent" min="1" max="99" value="70" />
+                    <span>
+                        <span id="train_status">70%</span>
+                        <i class="fa-solid fa-dumbbell"></i>
+                    </span>
+                </div>
 
-        <div class="form-group">
-            <p>Colunas selecionadas:</p>
-            {% for i, col in columns %}
-                <input class="col-selector" id="column-{{ i+1 }}" name="column-{{ i+1 }}" value="{{col}}" type="checkbox" />
-                <label for="column-{{ i+1 }}">{{ col }}</label><br/>            
-            {% endfor %}
-        </div>
-        <input id="submit-form" type="submit" value="Criar novo dataset" />
-        <p id="no-col-error">Selecione pelo menos uma coluna.</p>
-    </form>
-</section>
+                <div class="form-group">
+                    <h1><i class="fa-solid fa-table-columns"></i> Colunas</h1>
+                    {% for i, col in columns %}
+                        <span>
+                            <input class="col-selector" id="column-{{ i+1 }}" name="column-{{ i+1 }}" value="{{col}}" type="checkbox" />
+                            <label for="column-{{ i+1 }}">{{ col }}</label>
+                        </span>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <input id="submit-form" type="submit" value="Criar novo dataset" />
+                    <p id="no-col-error">Selecione pelo menos uma coluna.</p>
+                </div>
+            </form>
+        </section>
+</article>
 <style>
     #no-col-error {
         display: none;
@@ -39,6 +46,11 @@
         font-weight: 800;
         padding-top: 1em;
     }
+
+    .form-group {
+        padding: 1em 0;
+    }
+
 </style>
 <script>
     /**
@@ -87,9 +99,5 @@
         document.querySelector('#train_status').textContent = ev.target.value + '%';
         document.querySelector('#test_status').textContent = 100 - Number(ev.target.value) + '%';
     });
-
-    /*
-    * Impede que 
-    */
 </script>
 {% endblock %}

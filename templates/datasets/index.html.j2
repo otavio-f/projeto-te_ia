@@ -3,25 +3,48 @@
 {% block title %} Datasets {% endblock %}
 
 {% block content %}
-<section id="title">
-    <h1>Datasets</h1>
-</section>
-<section id="content">
+<article>
+    <header>
+        <h1>Datasets</h1>
+    </header>
+    <section>
+        <h1>O que é um <em>dataset</em>?</h1>
+        <p>É um conjunto de dados gerados a partir de ...<strong>TODO</strong></p>
+        <!--
+            TODO: Resto da descrição
+            Procure incluir informações relevantes para a aplicação.
+        -->
+    </section>
+</article>
+<article>
+    <header>
+        <h1>Lista de datasets</h1>
+    </header>
     {% if not datasets %}
-        <h2>Nenhum dataset encontrado.</h2>
-        <p>Não foi gerado nenhum dataset.</p>
+    <section>
+        <p>Ainda não foi gerado nenhum dataset.</p>
         <p>Clique <a href="{{ url_for('datasets.dataset_form') }}">aqui</a> para gerar um novo.</p>
+        <!--
+            TODO: Adicionar botão com (+) em algum lugar no topo da página.
+            Deve ser chamativo, a primeira coisa a ser notada na página.
+            Mantenha o texto no botão o mais curto possível.
+        -->
+    </section>
     {% else %}
-        <h2>Aqui estão os datasets gerados.</h2>
-        <p>Clique em um dataset para mais opções ou clique <a href="{{ url_for('datasets.dataset_form') }}">aqui</a> para gerar um novo.</p>
-        {% for ds in datasets %}
-            <section class="dataset">
-                <p class="dataset-title">Dataset <a href="{{url_for('datasets.get_dataset', dsid=ds.id)}}">{{ ds.id }}</a></p>
-                <p>Porcentagem de treino: {{ (100*ds.train_percent)|round }}%</p>
-                <p>Porcentagem de teste: {{ (100 * (1 - ds.train_percent))|round }}%</p>
-                <p>Colunas selecionadas: {{ ', '.join(ds.columns)}}</p>
-            </section>
-        {% endfor %}
+    <section>
+        <h1>Aqui estão os datasets gerados.</h1>
+        <p>Clique em um dataset para mais opções ou clique
+            <a href="{{ url_for('datasets.dataset_form') }}">aqui</a> para gerar um novo.
+        </p>
+    </section>
+    {% for ds in datasets %}
+    <section class="dataset">
+        <h1 class="dataset-title">Dataset <a href="{{url_for('datasets.get_dataset', dsid=ds.id)}}">{{ ds.id }}</a></h1>
+        <p>Porcentagem de treino: {{ (100*ds.train_percent)|int }}%</p>
+        <p>Porcentagem de teste: {{ (100 * (1 - ds.train_percent))|int }}%</p>
+        <p>Colunas selecionadas: {{ ', '.join(ds.columns)}}</p>
+    </section>
+    {% endfor %}
     {% endif %}
-</section>
+</article>
 {% endblock %}

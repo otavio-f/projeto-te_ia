@@ -3,10 +3,26 @@
 {% block title %} Início {% endblock %}
 
 {% block content %}
-<section id="title">
-    <h1>Projeto da disciplina</h1>
-</section>
-<section id="content">
-    <p>Esse projeto usa os dados de flores da espécie Iris.</p>
-</section>
+<article>
+    <header>
+        <h1>Projeto da disciplina</h1>
+    </header>
+    <section>
+        <h1>Código fonte</h1>
+        <p>O código fonte desse projeto pode ser encontrado no <a href="https://github.com/otavio-f/projeto-te_ia">GitHub</a>.</p>
+    </section>
+    <section>
+        <h1>Data set <em>Iris</em></h1>
+        <p>Esse projeto usa dados do data set de flores da espécie Iris <em>(Fisher, 1936)</em>.</p>
+        <p>O dataset pode ser obtido na <a href="https://archive.ics.uci.edu/dataset/53/iris">página da UCI</a>.</p>
+    </section>
+    <section>
+        <h1>Primeiros passos</h1>
+        <p>Os links no topo da página levam dão acesso às funcionalidades do projeto.</p>
+        <p><a href="{{url_for('datasets.dataset_home')}}">Datasets</a> leva a página de administração de conjuntos de dados.</p>
+        <p><a href="{{url_for('classifiers.classifier_home')}}">Classificadores</a> leva a página de informação de classificadores.</p>
+    </section>
+</article>
+<style>
+</style>
 {% endblock %}

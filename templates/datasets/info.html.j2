@@ -3,87 +3,60 @@
 {% block title %} Datasets {% endblock %}
 
 {% block content %}
-<section id="title">
-    <h1>Dataset {{ name }}</h1>
-</section>
-<section id="content">
-    <article class="dataset">
+<article>
+    <header>
+        <h1>Dataset {{ name }}</h1>
+    </header>
+    <section>
+        <h1>Informação</h1>
         <p>Porcentagem de treino: {{ (100*data.train_percent)|round }}% </p>
         <p>Porcentagem de teste:  {{ (100*(1-data.train_percent))|round }}% </p>
-    </article>
-    <article class="dataset">
-        <p>Colunas selecionadas:</p>
-        {{ ','.join(data.columns) }}
-    </article>
-    {% for species in ['setosa', 'versicolor', 'virginica'] %}
-        <article class="dataset">
-            <p class="species-name">Classe <span class="species-marker">iris {{ species }}</span></p>
-            <p>Vetor característica: {{ data.get_trainset(species).dataset.m }}</p>
-            <p>Usados em teste: {{ data.get_trainset(species).length }} elementos</p>
-            <p>Usados em treino: {{ 50 - data.get_trainset(species).length }} elementos</p>
-        </article>
+        <p>Colunas selecionadas: {{ data.columns|join(', ') }}</p>
+    </section>
+    {% for species in data.classes %}
+    <section>
+        <h1>Classe <em class="capitalized">Iris {{ species }}</em></h1>
+        <p>Vetor característica: {{ data.get_trainset(species).dataset.m }}</p>
+        <p>Usados em teste: {{ data.get_trainset(species).length }} elementos</p>
+        <p>Usados em treino: {{ 50 - data.get_trainset(species).length }} elementos</p>
+    </section>
     {% endfor %}
-    <section id="classifier-selection">
-        <div class="classifier-title">
-            <i class="fa-solid fa-bars-staggered"></i>
-            <h1>Classificadores:</h1>
-        </div>
+    <section>
+        <h1><i class="fa-solid fa-bars-staggered"></i> Classificadores</h1>
         <ul>
-            <li class="classifier">
+            <li>
                 <i class="fa-solid fa-ruler-combined"></i>
                 <a href="{{ url_for('classifiers.euclidean_dist', id=name)}}">Distância Euclideana</a>
             </li>
-            <li class="classifier">
+            <li>
                 <i class="fa-solid fa-arrows-up-to-line"></i>
                 <a href="{{ url_for('classifiers.maximum', id=name)}}">Máximo</a>
             </li>
-            <li class="classifier">
+            <li>
                 <i class="fa-solid fa-chart-line"></i>
                 <a href="{{ url_for('classifiers.dij', id=name)}}">Superfície de Decisão</a>
             </li>
-            <li class="classifier">
+            <li>
                 <i class="fa-solid fa-hexagon-nodes"></i>
                 <a href="{{ url_for('classifiers.perceptron', id=name)}}">Perceptron</a>
             </li>
-            <li class="classifier">
+            <li>
                 <i class="fa-solid fa-hexagon-nodes-bolt"></i>
                 <a href="{{ url_for('classifiers.perceptron_delta', id=name)}}">Perceptron Regra Delta</a>
             </li>
         </ul>
     </section>
+</article>
+<nav>
     <a href="{{ url_for('datasets.dataset_home') }}">&lt;&lt; Voltar</a>
-</section>
+</nav>
 <style>
-    .species-name {
-        padding-bottom: 0.5rem;
+    ul {
+        padding: 0 1em;
     }
 
-    .species-marker {
-        font-style: italic;
-        text-transform: capitalize;
+    li {
+        padding: .5em 0 ;
     }
-
-    .fa-solid {
-        padding-right: 1rem;
-    }
-
-    #classifier-selection {
-        padding: 1rem;
-    }
-
-    #classifier-selection h1 {
-        margin-bottom: 1rem;
-        font-weight: 800;
-    }
-
-    .classifier-title {
-        display: flex;
-    }
-
-    .classifier {
-        margin-bottom: 1rem;
-        list-style-type: none;
-    }
-
 </style>
 {% endblock %}

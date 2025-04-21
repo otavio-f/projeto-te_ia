@@ -3,14 +3,16 @@
 {% block title %} Datasets {% endblock %}
 
 {% block content %}
-<section id="title">
-    <h1>Dataset não encontrado</h1>
-</section>
-<section id="content">
-    <p>Não foi encontrado nenhum dataset com o código selecionado.</p>
-    <p>
-        <a href="{{url_for('datasets.dataset_home')}}">Volte para a página de datasets</a>
-        ou <a href="{{url_for('datasets.dataset_form')}}" >crie um novo</a>.
-    </p>
-</section>
+<article>
+    <header>
+        <h1>Dataset não encontrado</h1>
+    </header>
+    <section>
+        <p>Não foi encontrado nenhum dataset com o código selecionado.</p>
+        <p>
+            <a href="{{url_for('datasets.dataset_home')}}">Volte para a página de datasets</a>
+            ou <a href="{{url_for('datasets.dataset_form')}}" >crie um novo</a>.
+        </p>
+    </section>
+</article>
 {% endblock %}

@@ -78,13 +78,13 @@ def classifier_home():
     """
     return render_template("classifiers.html.j2")
 
-@classifier.route("/eucdist")
+@classifier.route("/min")
 def euclidean_dist():
     dsid = request.args["id"]
     try:
         return render_template(
             "classifiers/euclideandist-result.html.j2",
-            data=__control.euclidean_distance(dsid))
+            data=__control.euclidean_distance(dsid), dataset=dsid)
     except KeyError:
         return render_template('datasets/not-found.html.j2', name=dsid)
 
@@ -94,7 +94,7 @@ def maximum():
     try:
         return render_template(
             "classifiers/maximum-result.html.j2",
-            data=__control.maximum(dsid))
+            data=__control.maximum(dsid), dataset=dsid)
     except KeyError:
         return render_template('datasets/not-found.html.j2', name=dsid)
 
@@ -104,7 +104,7 @@ def dij():
     try:
         return render_template(
             "classifiers/dij-result.html.j2",
-            data=__control.dij(dsid))
+            data=__control.dij(dsid), dataset=dsid)
     except KeyError:
         return render_template('datasets/not-found.html.j2', name=dsid)
 
@@ -115,7 +115,7 @@ def perceptron():
     try:
         return render_template(
             "classifiers/perceptron-result.html.j2",
-            data=__control.perceptron(dsid, 10_000))
+            data=__control.perceptron(dsid, 10_000), dataset=dsid)
     except KeyError:
         return render_template('datasets/not-found.html.j2', name=dsid)
 
@@ -126,7 +126,7 @@ def perceptron_delta():
     try:
         return render_template(
             "classifiers/perceptron-delta-result.html.j2",
-            data=__control.perceptron_delta(dsid, 10_000))
+            data=__control.perceptron_delta(dsid, 10_000), dataset=dsid)
     except KeyError:
         return render_template('datasets/not-found.html.j2', name=dsid)
 
