@@ -81,27 +81,55 @@ def classifier_home():
 @classifier.route("/eucdist")
 def euclidean_dist():
     dsid = request.args["id"]
-    raise NotImplementedError
+    try:
+        return render_template(
+            "classifiers/euclideandist-result.html.j2",
+            data=__control.euclidean_distance(dsid))
+    except KeyError:
+        return render_template('datasets/not-found.html.j2', name=dsid)
 
 @classifier.route("/max")
-def maximum(dsid: str):
+def maximum():
     dsid = request.args["id"]
-    raise NotImplementedError
+    try:
+        return render_template(
+            "classifiers/maximum-result.html.j2",
+            data=__control.maximum(dsid))
+    except KeyError:
+        return render_template('datasets/not-found.html.j2', name=dsid)
 
 @classifier.route("/dij")
-def dij(dsid: str):
+def dij():
     dsid = request.args["id"]
-    raise NotImplementedError
+    try:
+        return render_template(
+            "classifiers/dij-result.html.j2",
+            data=__control.dij(dsid))
+    except KeyError:
+        return render_template('datasets/not-found.html.j2', name=dsid)
 
 
-@classifier.route("/perceptron", methods=["POST",])
-def perceptron(dsid: str):
+@classifier.route("/perceptron")
+def perceptron():
     dsid = request.args["id"]
-    raise NotImplementedError
+    try:
+        return render_template(
+            "classifiers/perceptron-result.html.j2",
+            data=__control.perceptron(dsid, 10_000))
+    except KeyError:
+        return render_template('datasets/not-found.html.j2', name=dsid)
 
-@classifier.route("/perceptron_delta", methods=["POST",])
-def perceptron_delta(dsid: str):
-    raise NotImplementedError
+
+@classifier.route("/perceptron_delta")
+def perceptron_delta():
+    dsid = request.args["id"]
+    try:
+        return render_template(
+            "classifiers/perceptron-delta-result.html.j2",
+            data=__control.perceptron_delta(dsid, 10_000))
+    except KeyError:
+        return render_template('datasets/not-found.html.j2', name=dsid)
+
 
 
 #-| Endpoint avaliadores: /evaluators |----------------------------------------

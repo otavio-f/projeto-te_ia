@@ -2,13 +2,15 @@ from collections import namedtuple
 from dataclasses import dataclass
 from dataclasses import field
 
+import itertools
 import random
 import os
 from typing import Callable
 import numpy as np
 
 from dataset import DataSet, DataExtractor
-import classifiers as classifier
+from classifiers import Classifiers
+from classifiers import TrainedClassifier
 
 
 @dataclass(frozen=True)
@@ -117,20 +119,20 @@ class DataSetInfo:
         # extrai dados de cada classe
         extractor = DataExtractor(src)
         conversor = lambda x: float(x.replace(",", "."))
-        data = {
-            cls: TrainTest(train, test)
-            for cls in classes
-            for (train, test) in extractor.extract_by_class(class_col_name, cls, columns, conversor).get_training_data(train_percent)
-            # for (train, test) in extractor.extract_by_class("Species", cls, columns, conversor).get_training_data(train_percent)
-        }
+        data: dict[str, TrainTest] = dict()
+
+        for cls in classes:
+            train, test = extractor.extract_by_class(class_col_name, cls, columns, conversor).get_training_data(train_percent)
+            data[cls] = TrainTest(train, test)
         
         # mistura as amostras de teste em um único conjunto
+        # BUG: misturando errado
         test_set = [Sample(v, cls)
                     for cls in classes
-                    for v in data[cls].test]
+                    for v in data[cls].test.lines]
         
         # constroi dados de treino
-        train_sets = [TrainSet(cls, data[cls].train, len(data[cls].train)) for cls in classes]
+        train_sets = [TrainSet(cls, data[cls].train, len(data[cls].train.lines)) for cls in classes]
 
         return DataSetInfo(
             DataSetInfo.__create_id(),
@@ -145,20 +147,12 @@ class DataSetInfo:
 @dataclass(frozen=True)
 class TrainResult:
     """Representa o resultado do teste de um algoritmo de classificação."""
-    equation: str
-    "representação da equação de classificação"
 
-    function: Callable[[list[float]], float]
-    "função de classificação que recebe uma amostra e retorna um valor"
-
-    tests: list[Sample]
+    classifier: dict[str, TrainedClassifier]
+    "O algoritmo de classificação treinado."
+    
+    tests: list[ClassifiedSample]
     "coleção de resultados dos testes"
-
-    iterations: int = -1
-    """
-    número de iterações necessárias para convergência do algoritmo.
-    Valores negativos significam que o algoritmo não é iterativo.
-    """
 
 
 @dataclass
@@ -216,118 +210,208 @@ class Controller:
 
     def euclidean_distance(self, dataset_id: str) -> TrainResult:
         """
-        Calcula a distância euclideana do conjunto de dados de teste e as dto.SPECIES.
+        Calcula a distância euclideana do conjunto de dados de teste e as classes.
         
         :param dataset_id: o id do conjunto de dados
-        :param class_name: o nome da classe
-        :returns: Um dicionário com a equação e os resultados dos testes.
+        :returns: Informação sobre o algoritmo e resultados dos testes
         :raises ValueError: se algum dos parâmetros for inválido
         """
         dataset = self.__get_dataset(dataset_id)
         
         if dataset is None:
-            raise ValueError("Dataset not found")
+            raise KeyError("Dataset not found")
+        
+        # resultado
+        result = TrainResult(dict(), list())
 
-        raise NotImplementedError
+        # calcula as equações de distância euclideana
+        for cls in dataset.classes:
+            m = dataset.get_trainset(cls).dataset.m
+            result.classifier[cls] = Classifiers.euclidean_dist(m)
+        
+        # armazena os vetores de teste classificados
+        for sample in dataset.test_set:
+            distances = {
+                cls: result.classifier[cls].func(sample.data)
+                for cls in dataset.classes
+                }
+            mindist = min(distances.values()) # valor de distância mínima
+            predict = min(dataset.classes, key=distances.get) # classe da distância mínima
+            # resultado da amostra
+            classSample = ClassifiedSample(sample.data, sample.cls,
+                                           mindist, predict)
+            result.tests.append(classSample)
 
+        return result
+    
 
-    def euclidean_distance(self, dataset_id: str, class_name: str) -> TrainResult:
+    def maximum(self, dataset_id: str) -> dict:
         """
-        Calcula a distância euclideana do conjunto de dados de teste e a classe.
+        Calcula a máxima do conjunto de dados de teste e a classe.
+
         :param dataset_id: o id do conjunto de dados
-        :param class_name: o nome da classe
-        :returns: Um dicionário com a equação e os resultados dos testes.
+        :returns: Informação sobre o algoritmo e resultados dos testes
+        :raises KeyError: se algum dos parâmetros for inválido
+        """
+        dataset = self.__get_dataset(dataset_id)
+        
+        if dataset is None:
+            raise KeyError("Dataset not found")
+        
+        # resultado
+        result = TrainResult(dict(), list())
+
+        # calcula as equações de distância euclideana
+        for cls in dataset.classes:
+            m = dataset.get_trainset(cls).dataset.m
+            result.classifier[cls] = Classifiers.max_dist(m)
+        
+        # armazena os vetores de teste classificados
+        for sample in dataset.test_set:
+            distances = {
+                cls: result.classifier[cls].func(sample.data)
+                for cls in dataset.classes
+                }
+            mindist = max(distances.values()) # valor de distância mínima
+            predict = max(dataset.classes, key=distances.get) # classe da distância mínima
+            # resultado da amostra
+            classSample = ClassifiedSample(sample.data, sample.cls,
+                                           mindist, predict)
+            result.tests.append(classSample)
+
+        return result
+
+
+    def dij(self, dataset_id: str) -> TrainResult:
+        """
+        Calcula a superfície de decisão do conjunto de dados de teste e as classes.
+        :param dataset_id: o id do conjunto de dados
+        :returns: Informação sobre o algoritmo e resultados dos testes
         :raises ValueError: se algum dos parâmetros for inválido
         """
         dataset = self.__get_dataset(dataset_id)
         
         if dataset is None:
-            raise ValueError("Dataset not found")
-
-        if class_name not in dataset.classes:
-            raise ValueError("Invalid class name")
-
-
-
-    def maximum(self, dataset_id: str, class_name: str) -> dict:
-        """
-        Calcula a distância euclideana do conjunto de dados de teste e a classe.
-        :param dataset_id: o id do conjunto de dados
-        :param class_name: o nome da classe
-        :returns: Um dicionário com a equação e os resultados dos testes.
-        :raises ValueError: se algum dos parâmetros for inválido
-        """
-        dataset = self.__get_dataset(dataset_id)
+            raise KeyError("Dataset not found")
         
-        if dataset is None:
-            raise ValueError("Dataset not found")
+        # resultado
+        result = TrainResult(dict(), list())
 
-        if class_name not in dataset.classes:
-            raise ValueError("Invalid class name")
+        # combinações de classes 2 a 2
+        combinations = tuple(itertools.combinations(dataset.classes, 2))
 
-
-
-    def dij(self, dataset_id: str, c1: str, c2: str) -> 'Equation':
-        """
-        Calcula a superfície de decisão euclideana do conjunto de dados de teste e a classe.
-        :param dataset_id: o id do conjunto de dados
-        :param c1: o nome da primeira classe
-        :param c2: o nome da segunda classe
-        :returns: Um dicionário com a equação e os resultados dos testes
-        :raises ValueError: se algum dos parâmetros for inválido
-        """
-        dataset = self.__get_dataset(dataset_id)
+        # calcula as superfícies de decisão de cada par de classes
+        for c1, c2 in combinations:
+            mi = dataset.get_trainset(c1).dataset.m
+            mj = dataset.get_trainset(c2).dataset.m
+            result.classifier[(c1, c2)] = Classifiers.dij(mi, mj)
         
-        if dataset is None:
-            raise ValueError("Dataset not found")
+        # armazena os vetores de teste classificados
+        # TODO: iterar sobre 2 equações, escolhendo a que der valor 1
+        for sample in dataset.test_set:
+            c1, c2 = combinations[0]
+            value = result.classifier[(c1, c2)].func(sample.data)
+            predict = c1 if value > 0 else c2
+            c1, c2 = next(pair for pair in combinations # par de classes
+                          if predict in pair            # par contém a classe prevista
+                          and pair != (c1, c2) and pair != (c2, c1)) # par não foi usado
+            value = result.classifier[(c1, c2)].func(sample.data)
+            predict = c1 if value > 0 else c2
+            # resultado da amostra
+            classSample = ClassifiedSample(sample.data, sample.cls,
+                                           value, predict)
+            result.tests.append(classSample)
 
-        if not c1 not in dataset.classes or not c2 in dataset.classes:
-            raise ValueError("Invalid class name")
-
-        raise NotImplementedError
+        return result
 
 
-    def perceptron(self, dataset_id: str, c1: str, c2: str, max_iters: int) -> dict:
+    def perceptron(self, dataset_id: str, max_iters: int) -> dict:
         """
         Calcula a superfície de decisão usando o algoritmo perceptron.
+
         :param dataset_id: o id do conjunto de dados
-        :param c1: o nome da primeira classe
-        :param c2: o nome da segunda classe
         :param max_iters: o número máximo de iterações permitido
-        :returns: Um dicionário com a equação e os resultados dos testes
+        :returns: Informação sobre o algoritmo e resultados dos testes
         :raises ValueError: se algum dos parâmetros for inválido
         """
         dataset = self.__get_dataset(dataset_id)
         
         if dataset is None:
-            raise ValueError("Dataset not found")
+            raise KeyError("Dataset not found")
+        
+        # resultado
+        result = TrainResult(dict(), list())
 
-        if not c1 not in dataset.classes or not c2 in dataset.classes:
-            raise ValueError("Invalid class name")
+        # combinações de classes 2 a 2
+        combinations = tuple(itertools.combinations(dataset.classes, 2))
 
-        raise NotImplementedError
+        # calcula as superfícies de decisão de cada par de classes
+        for c1, c2 in combinations:
+            c1v = dataset.get_trainset(c1).dataset.lines
+            c2v = dataset.get_trainset(c2).dataset.lines
+            result.classifier[(c1, c2)] = Classifiers.perceptron(c1v, c2v, max_iters)
+        
+        # armazena os vetores de teste classificados
+        # TODO: iterar sobre 2 equações, escolhendo a que der valor 1
+        for sample in dataset.test_set:
+            c1, c2 = combinations[0]
+            value = result.classifier[(c1, c2)].func(sample.data)
+            predict = c1 if value > 0 else c2
+            c1, c2 = next(pair for pair in combinations # par de classes
+                          if predict in pair            # par contém a classe prevista
+                          and pair != (c1, c2) and pair != (c2, c1)) # par não foi usado
+            value = result.classifier[(c1, c2)].func(sample.data)
+            predict = c1 if value > 0 else c2
+            # resultado da amostra
+            classSample = ClassifiedSample(sample.data, sample.cls,
+                                           value, predict)
+            result.tests.append(classSample)
+
+        return result
 
 
-    def perceptron_delta(self, dataset_id: str, c1: str, c2: str, max_iters: int) -> dict:
+    def perceptron_delta(self, dataset_id: str, max_iters: int) -> dict:
         """
         Calcula a superfície de decisão usando o algoritmo perceptron com regra delta.
+
         :param dataset_id: o id do conjunto de dados
-        :param c1: o nome da primeira classe
-        :param c2: o nome da segunda classe
         :param max_iters: o número máximo de iterações permitido
-        :returns: Um dicionário com a equação e os resultados dos testes
+        :returns: Informação sobre o algoritmo e resultados dos testes
         :raises ValueError: se algum dos parâmetros for inválido
         """
-
         dataset = self.__get_dataset(dataset_id)
         
         if dataset is None:
-            raise ValueError("Dataset not found")
+            raise KeyError("Dataset not found")
+        
+        # resultado
+        result = TrainResult(dict(), list())
 
-        if not c1 not in dataset.classes or not c2 in dataset.classes:
-            raise ValueError("Invalid class name")
+        # combinações de classes 2 a 2
+        combinations = tuple(itertools.combinations(dataset.classes, 2))
 
-        raise NotImplementedError
+        # calcula as superfícies de decisão de cada par de classes
+        for c1, c2 in combinations:
+            c1v = dataset.get_trainset(c1).dataset.lines
+            c2v = dataset.get_trainset(c2).dataset.lines
+            result.classifier[(c1, c2)] = Classifiers.delta_perceptron(c1v, c2v, max_iters)
+        
+        # classifica vetores de teste
+        for sample in dataset.test_set:
+            c1, c2 = combinations[0]
+            value = result.classifier[(c1, c2)].func(sample.data)
+            predict = c1 if value > 0 else c2
+            c1, c2 = next(pair for pair in combinations # par de classes
+                          if predict in pair            # par contém a classe prevista
+                          and pair != (c1, c2) and pair != (c2, c1)) # par não foi usado
+            value = result.classifier[(c1, c2)].func(sample.data)
+            predict = c1 if value > 0 else c2
+            # resultado da amostra
+            classSample = ClassifiedSample(sample.data, sample.cls,
+                                           value, predict)
+            result.tests.append(classSample)
+
+        return result
 
 
     def compare_classifiers(self, dataset_id: str, alg1: str, alg2: str) -> dict:

@@ -22,26 +22,43 @@
         </div>
 
         <div class="form-group">
-            <p>Classes selecionadas:</p>
+            <p>Colunas selecionadas:</p>
             {% for i, col in columns %}
                 <input class="col-selector" id="column-{{ i+1 }}" name="column-{{ i+1 }}" value="{{col}}" type="checkbox" />
                 <label for="column-{{ i+1 }}">{{ col }}</label><br/>            
             {% endfor %}
         </div>
         <input id="submit-form" type="submit" value="Criar novo dataset" />
+        <p id="no-col-error">Selecione pelo menos uma coluna.</p>
     </form>
 </section>
+<style>
+    #no-col-error {
+        display: none;
+        color: red;
+        font-weight: 800;
+        padding-top: 1em;
+    }
+</style>
 <script>
     /**
     * Faz requisição baseado nos dados do formulário
     */
     document.querySelector('#new-dataset').addEventListener('submit', (event) => {
         event.preventDefault();
+        
         const train_percent = Number(document.querySelector("#train_percent").value)/100;
         const columnSelectors = Array.from(document.querySelectorAll(".col-selector"));
         const columns = columnSelectors
             .filter((elem) => elem.checked) // pega elementos que estão marcados
             .map((elem) => elem.value) // extrai os valores
+
+        // se não foi selecionada nenhuma coluna, mostre a mensagem de erro e pare
+        if(columns.length === 0) {
+            const warn = document.querySelector("#no-col-error");
+            warn.style.display = 'block';
+            return false;
+        }
 
         // faz requisição
         fetch("{{url_for('datasets.gen_dataset')}}", {
@@ -70,5 +87,9 @@
         document.querySelector('#train_status').textContent = ev.target.value + '%';
         document.querySelector('#test_status').textContent = 100 - Number(ev.target.value) + '%';
     });
+
+    /*
+    * Impede que 
+    */
 </script>
 {% endblock %}

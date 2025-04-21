@@ -18,7 +18,7 @@
     {% for species in ['setosa', 'versicolor', 'virginica'] %}
         <article class="dataset">
             <p class="species-name">Classe <span class="species-marker">iris {{ species }}</span></p>
-            <p>Vetor característica: {{ data.get_trainset(species).m }}</p>
+            <p>Vetor característica: {{ data.get_trainset(species).dataset.m }}</p>
             <p>Usados em teste: {{ data.get_trainset(species).length }} elementos</p>
             <p>Usados em treino: {{ 50 - data.get_trainset(species).length }} elementos</p>
         </article>
@@ -35,19 +35,19 @@
             </li>
             <li class="classifier">
                 <i class="fa-solid fa-arrows-up-to-line"></i>
-                <a href="{{ url_for('classifiers.maximum')}}">Máximo</a>
+                <a href="{{ url_for('classifiers.maximum', id=name)}}">Máximo</a>
             </li>
             <li class="classifier">
                 <i class="fa-solid fa-chart-line"></i>
-                <a href="{{ url_for('classifiers.dij')}}">Superfície de Decisão</a>
+                <a href="{{ url_for('classifiers.dij', id=name)}}">Superfície de Decisão</a>
             </li>
             <li class="classifier">
                 <i class="fa-solid fa-hexagon-nodes"></i>
-                <a href="{{ url_for('classifiers.perceptron')}}">Perceptron</a>
+                <a href="{{ url_for('classifiers.perceptron', id=name)}}">Perceptron</a>
             </li>
             <li class="classifier">
                 <i class="fa-solid fa-hexagon-nodes-bolt"></i>
-                <a href="{{ url_for('classifiers.perceptron_delta')}}">Perceptron Regra Delta</a>
+                <a href="{{ url_for('classifiers.perceptron_delta', id=name)}}">Perceptron Regra Delta</a>
             </li>
         </ul>
     </section>

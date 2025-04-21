@@ -4,14 +4,14 @@
 
 {% block content %}
 <section id="title">
-    <h1>Classificador de distância euclideana</h1>
+    <h1>Superfície de decisão</h1>
 </section>
 <article id="content">
-    <h2 class="title">Distâncias das classes</h2>
-    {% for cls in ("setosa", "versicolor", "virginica") %}
+    <h2 class="title">Equações</h2>
+    {% for c1, c2 in data.classifier.keys() %}
     <section class="dataset">
-        <h1 class="species-name">Classe <em class="species-marker">Iris {{ cls }}</em></h1>
-        <p>Equação de distância: {{ data.classifier[cls].eq }}</p>
+        <h1 class="species-name">Classe <em class="species-marker">Iris {{ c1 }} x Iris {{ c2 }}</em></h1>
+        <p>Equação de distância: {{ data.classifier[(c1, c2)].eq }}</p>
     </section>
     {% endfor %}
     <h2 class="title">Resultados da classificação</h2>
