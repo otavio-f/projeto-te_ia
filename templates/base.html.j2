@@ -22,8 +22,13 @@
     <link rel="stylesheet" href="{{url_for('static', filename='reset.css')}}" />
     <!-- estilos globais -->
     <style>
+      :root {
+        --background-color: #fdf;
+        --darker-background: #ece;
+      }
+
       body {
-        background-color: #fdf;
+        background-color: var(--background-color);
         font-family: "IBM Plex Mono", sans-serif, monospace;
         font-style: normal;
       }
@@ -74,14 +79,21 @@
         font-weight: 800;
       }
 
+      article {
+          position: relative;
+          padding: 1em .5em;
+          background-color: #d0d0d0;
+          border-radius: 16px;
+          margin-bottom: 1em;
+      }
+
       article header h1 {
         font-size: 1.5rem;
-        padding-top: 1rem;
       }
 
       section {
         padding: 1em 1em;
-        margin: 1em 0 1em 0;
+        margin-top: 1em;
         border: 1px #999 solid;
         border-radius: 8px;
       }
@@ -101,6 +113,27 @@
 
       .capitalized {
           text-transform: capitalize;
+      }
+
+      .visibility-button {
+          position: absolute;
+          top: .5em;
+          right: .5em;
+          border: 1px solid #000;
+          border-radius: 8px;
+          padding: .5em;
+      }
+
+      .hide-article:hover {
+          cursor:zoom-out;
+      }
+
+      .show-article:hover {
+          cursor:zoom-in;
+      }
+
+      .show-article {
+          display: none;
       }
     </style>
   </head>
@@ -122,5 +155,48 @@
     <footer>
       <h1>Otávio Ferreira Clementino - 2025</h1>
     </footer>
+
+    <script>
+        // esconde a seção
+        document.querySelectorAll('.hide-article').forEach((button) => {
+            button.addEventListener('click', (ev) => {
+                // seção
+                const article = button.parentElement;
+
+                // esconde todos os elementos, menos o título;
+                const sections = Array.from(article.children)
+                    .filter((elem) => elem.tagName === 'SECTION')
+                    .forEach((elem) => elem.style.display = 'none');
+
+                // esconde o botão (-)
+                button.style.display = 'none';
+
+                // mostra o botão (+)
+                const showButton = article.querySelector('.show-article');
+                showButton.style.display = 'block';
+            });
+        });
+
+        // mostra a seção
+        document.querySelectorAll('.show-article').forEach((button) => {
+            button.addEventListener('click', (ev) => {
+                // seção
+                const article = button.parentElement;
+
+                // esconde todos os elementos, menos o título;
+                const sections = Array.from(article.children)
+                    .filter((elem) => elem.tagName === 'SECTION')
+                    .forEach((elem) => elem.style.display = 'block');
+
+                // esconde o botão (+)
+                button.style.display = 'none';
+
+                // mostra o botão (-)
+                const showButton = article.querySelector('.hide-article');
+                showButton.style.display = 'block';
+            });
+        });
+    </script>
   </body>
+
 </html>
