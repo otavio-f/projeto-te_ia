@@ -3,6 +3,7 @@ Classificadores e
 :author: Otávio Ferreira
 """
 
+from fractions import Fraction
 import math
 import numpy as np
 from dataclasses import dataclass
@@ -52,35 +53,37 @@ class Classifier:
         return result
 
     @staticmethod
-    def _get_term(i: int, xk: float, is_indep=False) -> str:
+    def _get_term(i: int, xk: float, independent=False, hide_first_plus=True, variable="x") -> str:
         """
-        Retorna uma representação do termo na equação. Ex.: x1, -2x2, x3
+        Retorna uma representação do termo na equação, compatível com latex.
 
         :param i: índice do termo
         :param xk: multiplicador do termo
-        :param is_indep: se é um termo independente (sem x)
+        :param independente: se é um termo independente da variável
+        :param hide_first_plus: se True, esconde o sinal positivo do primeiro termo da equação
+        :param variable: nome da variável
         """
         if xk == 0:
             return ""
         
         if xk < 0:
             sign = "-"
-        elif i==0:
+        elif i==0 and hide_first_plus:
             sign = ""
         else:
             sign = "+"
         
-        if abs(xk) == 1 and not is_indep:
+        if abs(xk) == 1 and not independent:
             mul = ""
-        elif abs(xk - math.floor(xk)) == 0:
-            mul = f"{abs(math.floor(xk))}"
+        elif abs(xk - int(xk)) == 0: # é inteiro
+            mul = f"{abs(int(xk))}"
         else:
-            mul = f"{abs(xk)}"
+            mul = f"{str(abs(xk))}"
 
-        if is_indep:
+        if independent:
             term = ""
         else:
-            term = f"x{i+1}"
+            term = f"{variable}_{{{i+1}}}"
         
         return f"{sign}{mul}{term}"
 
@@ -92,24 +95,24 @@ class Classifier:
         :param m: O vetor característica.
         :returns: Um classificador treinado.
         """
-        eq = '√('
+        eq = ""
         
         # x1² + x2² + ... xn²
-        eq += "+".join(f"x{i+1}²" for i, _ in enumerate(m))
+        for i, _ in enumerate(m):
+            eq += Classifier._get_term(i, 1, variable="x^{2}")
         
         # - 2*m1x1 - 2*m2x2 - ... - 2*mnxn
         for i, mi in enumerate(m):
-            if mi == 0:
-                continue
-            mul = -2 * mi
-            sign = "-" if mul<0 else "+"
-            term = f"x{i+1}" if abs(mul) == 1 else f"{abs(mul)}x{i+1}"
-            eq += f"{sign}{term}"
+            eq += Classifier._get_term(i, -2*mi, hide_first_plus=False)
         
         # m1² + m2² + ... + mn²
-        eq += f"+{sum(mi*mi for mi in m)})"
+        total = sum(mi**2 for mi in m)
+        eq += Classifier._get_term(1, total, independent=True, hide_first_plus=False)
+        
+        eq = f"\\sqrt{{{eq}}}"
+
         # func = lambda x: math.sqrt((x - m).T * (x - m))
-        func = lambda x: math.sqrt((x - m).T.dot(x - m))
+        func = lambda x: np.sqrt((x - m).T.dot(x - m))
         return Classifier(eq, func)
 
     @staticmethod
@@ -124,9 +127,7 @@ class Classifier:
 
         # extra = -1/2 * (m.T * m)
         extra = -1/2 * m.T.dot(m)
-        if extra != 0:
-            sign = "-" if extra < 0 else '+'
-            eq += f'{sign}{abs(extra)}'
+        eq += Classifier._get_term(1, extra, independent=True, hide_first_plus=False)
         
         # func = lambda x: (x.T * m) - (1/2 * (m.T * m))
         func = lambda x: m.T.dot(x) - (1/2 * (m.dot(m)))
@@ -144,9 +145,7 @@ class Classifier:
         
         # extra = -1/2 * ((mi - mj).T * (mi + mj))
         extra = -1/2 * (mi - mj).T.dot(mi + mj)
-        if extra != 0:
-            sign = '-' if extra < 0 else '+'
-            eq += f'{sign}{abs(extra)}'
+        eq += Classifier._get_term(1, extra, independent=True, hide_first_plus=False)
         
         # func = lambda x: ((mi - mj).T * x) - 1/2 * ((mi - mj).T * (mi + mj))
         func = lambda x: (mi - mj).T.dot(x) - 1/2 * (mi - mj).T.dot(mi + mj)
@@ -314,8 +313,6 @@ class Classifier:
             eq += Classifier._get_term(i, wi)
 
         # adiciona termo extra a versão legível
-        if extra != 0:
-            sign = "-" if extra < 0 else '+'
-            eq += f'{sign}{abs(extra)}'
+        eq += Classifier._get_term(1, extra, independent=True)
 
         return Classifier(eq, func)
