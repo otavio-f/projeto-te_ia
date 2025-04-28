@@ -3,7 +3,7 @@ Testes de unidade para módulo conjunto de dados
 """
 
 import unittest
-from dataset import DataSet
+from processors.dataset import DataSet
 import numpy as np
 
 

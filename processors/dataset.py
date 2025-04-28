@@ -3,13 +3,12 @@ Manipulação de dados vetores e tabulares
 :author: Otavio
 """
 
-from typing import Any
+from typing import Any, NamedTuple
 from typing import Callable
 
 from dataclasses import dataclass
 import csv
 import os
-import math
 import numpy as np
 
 
@@ -19,14 +18,18 @@ class DataSet:
     Representa um conjunto de dados
     """
     __columns: list[np.ndarray]
+    "As colunas de dados."
+
     column_titles: list[str]
+    "Os nomes das colunas de dados."
 
     def __post_init__(self):
         """
-        Verifica a consistência dos dados de entrada.
+        Checa a consistência dos dados.
+
+        :raises AssertionError: Se os dados forem inconsistentes.
         """
-        
-        # quantidade de colunas x quantidade de titulos
+        # quantidade de colunas deve ter a mesma quantidade de títulos
         assert len(self.__columns) == len(self.column_titles)
         
         # todas colunas devem ter mesma quantidade de elementos
@@ -87,9 +90,9 @@ class DataSet:
     @property
     def m(self) -> np.ndarray:
         """
-        Calcula a média de todas as colunas.
+        Calcula o vetor característica.
 
-        :returns: A média de cada vetor desse conjunto de dados.
+        :returns: A média de cada coluna desse conjunto de dados.
         """
         return np.fromiter((col.mean() for col in self.__columns), np.single)
 
@@ -105,7 +108,7 @@ class DataSet:
         rng.shuffle(lines)
         
         # determina ponto de corte entre treinamento e teste
-        cut_point = math.floor(len(self.__columns[0]) * percentage)
+        cut_point = int(len(self.__columns[0]) * percentage)
 
         # separa treino e teste
         train = lines[:cut_point] # treino: de 0 ao ponto de corte

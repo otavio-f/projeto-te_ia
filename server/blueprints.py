@@ -1,4 +1,4 @@
-from controller import Controller
+from server.controller import Controller
 
 from flask import Blueprint
 from flask import Response
@@ -6,10 +6,8 @@ from flask import request
 from flask import render_template
 
 
-__control = Controller()
+__control = Controller.create()
 
-
-# TODO: Retornar templates com os dados já construídos
 
 #-| Endpoint Dataset: dataset |-----------------------------------------------
 

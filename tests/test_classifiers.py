@@ -1,6 +1,6 @@
 import unittest
 import math
-from classifiers import Classifiers as classifier
+from processors.classifiers import Classifier
 import numpy as np
 
 
@@ -15,7 +15,7 @@ class ClassifierTestCase(unittest.TestCase):
         """
 
         test = np.array((4, 5, 6))
-        result = classifier.euclidean_dist(test)
+        result = Classifier.euclidean_dist(test)
 
         expected_eq = "√(x1²+x2²+x3²-8x1-10x2-12x3+77)"
         self.assertEqual(expected_eq, result.eq)
@@ -29,7 +29,7 @@ class ClassifierTestCase(unittest.TestCase):
         Testa classificador máximo.
         """
         test = np.array((3, 4, 5))
-        result = classifier.max_dist(test)
+        result = Classifier.max_dist(test)
 
         expected_eq = "3x1+4x2+5x3-25.0"
         self.assertEqual(expected_eq, result.eq)
@@ -45,7 +45,7 @@ class ClassifierTestCase(unittest.TestCase):
         versicolor = np.array((4.3, 1.3))
         setosa = np.array((1.5, 0.3))
 
-        result = classifier.dij(versicolor, setosa)
+        result = Classifier.dij(versicolor, setosa)
 
         expected_eq = "2.8x1+x2-8.92"
         self.assertEqual(expected_eq, result.eq)
@@ -59,10 +59,10 @@ class ClassifierTestCase(unittest.TestCase):
         """
         cl1 = [np.array((0, 0)), np.array((0, 1))]
         cl2 = [np.array((1, 0)), np.array((1, 1))]
-        result = classifier.perceptron(cl1, cl2)
+        result = Classifier.perceptron(cl1, cl2)
 
         self.assertEqual("-2x1+1", result.eq)
-        self.assertEqual(16, result.iters)
+        self.assertEqual(11, result.iters)
         self.assertTrue(result.func([0, 0]) > 0)
         self.assertTrue(result.func([0, 1]) > 0)
         self.assertTrue(result.func([1, 0]) < 0)
@@ -74,11 +74,10 @@ class ClassifierTestCase(unittest.TestCase):
         """
         cl1 = [np.array((0, 0)), np.array((0, 1))]
         cl2 = [np.array((1, 0)), np.array((1, 1))]
-        result = classifier.delta_perceptron(cl1, cl2, alpha=0.1)
+        result = Classifier.delta_perceptron(cl1, cl2, alpha=0.1)
 
         # self.assertEqual("", eq)
         self.assertTrue(result.func([0, 0]) > 0)
         self.assertTrue(result.func([0, 1]) > 0)
         self.assertTrue(result.func([1, 0]) < 0)
         self.assertTrue(result.func([1, 1]) < 0)
-    

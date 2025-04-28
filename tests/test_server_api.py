@@ -2,7 +2,7 @@ import unittest
 import requests
 from flask import Flask
 from multiprocessing import Process
-from blueprints import dataset, classifier, evaluator
+from server.blueprints import dataset, classifier, evaluator
 import time
 
 
