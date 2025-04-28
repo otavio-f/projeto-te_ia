@@ -1,0 +1,80 @@
+{% extends 'classifiers/base.html.j2' %}
+
+{% block title %} Classificador ótimo de Bayes {% endblock %}
+
+{% block equations %}
+{% for c1, c2 in data.classifier.keys() %}
+<section>
+    <h1>Classe <em class="capitalized">Iris {{ c1 }}</em> x <em class="capitalized">Iris {{ c2 }}</em></h1>
+    <p>Equação de superfície: {{ data.classifier[(c1, c2)].eq }}</p>
+</section>
+{% endfor %}
+{% endblock %}
+
+{% block matrix %}
+<section>
+    <h1>Matriz de confusão</h1>
+    <table>
+        <tr>
+            <th>&darr;Expectativa/&rarr;Predição</th>
+            {% for row in data.matrix.classes %}
+            <th>{{ row }}</th>
+            {% endfor %}
+            <th>total</th>
+        </tr>
+        
+        {% for i, row in data.matrix.classes|enumerate %}
+        <tr>
+            <th>{{ row }}</th>
+            {% for j, col in data.matrix.classes|enumerate %}
+            <td>{{ data.matrix.M(i, j) }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        <tr>
+            <th>totals</th>
+        </tr>
+    </table>
+</section>
+{% endblock %}
+
+{% block metrics %}
+<section>
+    <h1>Indicadores gerais</h1>
+    <p>Acerto geral (<em>Ag</em>): {{ data.matrix.Ag|round(5) }}</p>
+    <p>Acerto aleatório ou Acerto causal  (<em>Aa</em>): {{ data.matrix.Aa|round(4) }}</p>
+</section>
+<section>
+    <h1>Acurácia do produtor (<em>Ap</em>)</h1>
+    {% for i, cls in data.matrix.classes|enumerate %}
+    <p>{{ cls }}: {{ data.matrix.Ap[0, i]|round(5) }}</p>
+    {% endfor %}
+</section>
+<section>
+    <h1>Acurácia do usuário (<em>Au</em>)</h1>
+    {% for i, cls in data.matrix.classes|enumerate %}
+    <p>{{ cls }}: {{ data.matrix.Au[0, i]|round(5) }}</p>
+    {% endfor %}
+</section>
+<section>
+    <h1>Coeficiente de Kappa (<em>K</em>)</h1>
+    <p>K: {{ data.matrix.kappa|round(5) }}</p>
+    <p>&sigma;&sup2;: {{ data.matrix.kappa_var|round(10) }}</p>
+</section>
+<section>
+    <h1>Coeficiente de Tau (<em>&tau;</em>)</h1>
+    <p>&tau;: {{ data.matrix.tau|round(5) }}</p>
+    <p>&sigma;&sup2;: {{ data.matrix.tau_var|round(10) }}</p>
+</section>
+{% endblock %}
+
+{% block results %}
+{% for test in data.tests %}
+<section>
+    <h1>Vetor [{{ test.data|join(', ') }}]</h1>
+    <p>Classe esperada: <em class="capitalized">Iris {{ test.expected }}</em></p>
+    <p>Classe prevista: <em class="capitalized">Iris {{ test.predicted }}</em></p>
+    <p>Distância: {{ test.value }}</p>
+</section>
+{% endfor %}
+{% endblock %}

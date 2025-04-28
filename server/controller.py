@@ -316,6 +316,7 @@ class Controller(NamedTuple):
     def dij(self, dataset_id: str) -> TrainResult:
         """
         Calcula a superfície de decisão do conjunto de dados de teste e as classes.
+        
         :param dataset_id: o id do conjunto de dados
         :returns: Informação sobre o algoritmo e resultados dos testes
         :raises ValueError: se algum dos parâmetros for inválido
@@ -358,6 +359,55 @@ class Controller(NamedTuple):
         return result
 
 
+    def bayes(self, dataset_id: str) -> TrainResult:
+        """
+        Calcula a superfície de decisão do conjunto de dados usando o classificador de Bayes para as classes.
+
+        :param dataset_id: o id do conjunto de dados
+        :returns: Informação sobre o algoritmo e resultados dos testes
+        :raises ValueError: se algum dos parâmetros for inválido
+        """
+        dataset = self.__get_dataset(dataset_id)
+        
+        if dataset is None:
+            raise KeyError("Dataset not found")
+        
+        # combinações de classes 2 a 2
+        combinations = tuple(itertools.combinations(dataset.classes, 2))
+
+        # calcula as superfícies de decisão de cada par de classes
+        classifiers = dict()
+        for c1, c2 in combinations:
+            ci = dataset.train_set[c1]
+            cj = dataset.train_set[c2]
+            classifiers[(c1, c2)] = Classifier.bayes(
+                ci.lines.tolist(),
+                cj.lines.tolist(),
+                ci.m,
+                cj.m)
+        
+        # armazena os vetores de teste classificados
+        # TODO: generalizar para mais de três classes
+        tests = []
+        for sample in dataset.test_set:
+            # primeira classificação usa o primeiro classificador encontrado
+            c1, c2 = combinations[0]
+            value = classifiers[(c1, c2)].func(sample.data)
+            predict = c1 if value > 0 else c2
+            # escolhe o próximo par de classes do classificador
+            c1, c2 = next(pair for pair in combinations # par de classes
+                          if predict in pair            # par contém a classe prevista
+                          and pair != (c1, c2) and pair != (c2, c1)) # par não foi usado
+            value = classifiers[(c1, c2)].func(sample.data)
+            predict = c1 if value > 0 else c2
+            # resultado da amostra
+            csample = ClassifiedSample(sample.data, sample.cls,
+                                           value, predict)
+            tests.append(csample)
+
+        result = TrainResult.create(dataset.classes, classifiers, tests)
+        return result
+    
     def perceptron(self, dataset_id: str, max_iters: int) -> TrainResult:
         """
         Calcula a superfície de decisão usando o algoritmo perceptron.

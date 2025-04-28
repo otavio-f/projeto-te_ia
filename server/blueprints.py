@@ -107,6 +107,17 @@ def dij():
         return render_template('datasets/not-found.html.j2', name=dsid)
 
 
+@classifier.route("/bayes")
+def bayes():
+    dsid = request.args["id"]
+    try:
+        return render_template(
+            "classifiers/bayes-result.html.j2",
+            data=__control.dij(dsid), dataset=dsid)
+    except KeyError:
+        return render_template('datasets/not-found.html.j2', name=dsid)
+
+
 @classifier.route("/perceptron")
 def perceptron():
     dsid = request.args["id"]

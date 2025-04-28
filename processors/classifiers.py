@@ -257,3 +257,65 @@ class Classifier:
         # func = lambda x: w * augment(x, 1)
         
         return Classifier(eq, func, len(errors))
+
+
+    @staticmethod
+    def bayes(civ: list[np.ndarray], cjv: list[np.ndarray], mi: np.ndarray, mj: np.ndarray) -> 'Classifier':
+        """
+        Calcula a equação de bayes para a classe.
+        
+        :param civ: Conjunto de vetores de treino para a classe 1.
+        :param cjv: Conjunto de vetores de treino para a classe 2.
+        :param mi: Vetor característica da classe 1.
+        :param mj: Vetor característica da classe 2.
+        """
+        def _bayes(vall: list[np.ndarray], m: np.ndarray) -> tuple[np.ndarray, float]:
+            """
+            Calcula a equação de bayes para uma classe.
+            
+            :param vall: O conjunto de vetores de treino.
+            :param m: Vetor característica.
+            :returns: O conjunto de fatores que multiplicam x e o termo independente -1/2 * mT * E * m
+            """
+            m = np.asmatrix(m)
+            # precálculo de (m * m.T)
+            m_mT = m.T * m
+
+            # somatório (x * x.T) - (m * m.T)
+            E = np.asmatrix(np.zeros(m_mT.shape)) # inicializa vetor NxN de zeros
+            for vector in vall:
+                x = np.asmatrix(vector)
+                x_xT = x.T * x
+                E += x_xT - m_mT
+
+            # multiplica por 1/n
+            n = len(vall)
+            E = (1/n) * E
+
+            indep = -(1/2) * (m * E.I * m.T).item() # .item() extrai o único elemento da matriz 1x1
+            factors = (E.I * m.T).A.flatten() # .A.flatten() converte pra array simples
+            return factors, indep
+        
+        # obtém d1(x) e d2(x)
+        # d(x) é dividido em parte que multiplica X (xT E...)
+        # e d_extra é a parte independente de X (-1/2...)
+        d1x, d1extra = _bayes(civ, mi) # d1x primeira parte, d1i termo independente
+        d2x, d2extra = _bayes(cjv, mj)
+
+        # calcula d1(x) - d2(x)
+        djx = d1x - d2x # transforma em um np.array
+        extra = d1extra - d2extra # (-1/2...), não depende de X
+
+        func = lambda x: djx.dot(x) + extra
+
+        # constroi versão legível
+        eq = ""
+        for i, wi in enumerate(djx):
+            eq += Classifier._get_term(i, wi)
+
+        # adiciona termo extra a versão legível
+        if extra != 0:
+            sign = "-" if extra < 0 else '+'
+            eq += f'{sign}{abs(extra)}'
+
+        return Classifier(eq, func)

@@ -81,3 +81,35 @@ class ClassifierTestCase(unittest.TestCase):
         self.assertTrue(result.func([0, 1]) > 0)
         self.assertTrue(result.func([1, 0]) < 0)
         self.assertTrue(result.func([1, 1]) < 0)
+
+    def testBayes(self):
+        """
+        Testa bayes.
+        """
+        c1 = [
+            (1, 0, 1),
+            (1, 0, 0),
+            (0, 0, 0),
+            (1, 1, 0)
+        ]
+        m1 = np.average(c1, axis=0)
+
+        c2 = [
+            (0, 0, 1),
+            (0, 1, 1),
+            (0, 1, 0),
+            (1, 1, 1)
+        ]
+        m2 = np.average(c2, axis=0)
+
+        result = Classifier.bayes(c1, c2, m1, m2)
+        self.assertEquals(result.eq, "8x1-8x2-8x3+4.0")
+        self.assertTrue(result.func(c1[0]) > 0)
+        self.assertTrue(result.func(c1[1]) > 0)
+        self.assertTrue(result.func(c1[2]) > 0)
+        self.assertTrue(result.func(c1[3]) > 0)
+
+        self.assertTrue(result.func(c2[0]) < 0)
+        self.assertTrue(result.func(c2[1]) < 0)
+        self.assertTrue(result.func(c2[2]) < 0)
+        self.assertTrue(result.func(c2[3]) < 0)
