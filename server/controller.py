@@ -165,7 +165,7 @@ class TrainResult(NamedTuple):
         # atribui valores da matriz de confusão
         for sample in tests:
             expectIndex = classes.index(sample.expected) # seleciona coluna
-            predictIndex = classes.index(sample.expected) # seleciona linha
+            predictIndex = classes.index(sample.predicted) # seleciona linha
             m[expectIndex][predictIndex] += 1
 
         # gera matriz de confusão

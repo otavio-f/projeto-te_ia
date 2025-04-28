@@ -43,6 +43,10 @@
         padding: 1em;
       }
 
+      #banner a {
+        text-decoration: none;
+      }
+      
       #banner h1 {
         font-size: 1.5rem;
         font-weight: 800;
@@ -139,7 +143,9 @@
   </head>
   <body>
     <header id="banner">
-      <h1 id="announce">Tópicos Especiais em Inteligência Artificial</h1>
+      <a href="{{url_for('home')}}">
+        <h1 id="announce">Tópicos Especiais em Inteligência Artificial</h1>
+      </a>
       <nav>
         <ul>
           <li>

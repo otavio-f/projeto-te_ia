@@ -8,14 +8,20 @@ from flask import redirect
 
 
 app = Flask(__name__)
+
+# configuração
 app.config['SERVER_NAME'] = '0.0.0.0:5000'
 
+# filtros úteis
+app.jinja_env.filters['zip'] = zip
+app.jinja_env.filters['enumerate'] = enumerate
 
+# inclui outras partes da aplicação
 app.register_blueprint(dataset, url_prefix="/datasets")
 app.register_blueprint(classifier, url_prefix="/classifiers")
 app.register_blueprint(evaluator, url_prefix="/evaluators")
 
-
+# rotas padrão
 @app.route("/")
 def home():
     return render_template("index.html.j2")

@@ -123,7 +123,7 @@ class ConfusionMatrix:
     @property
     def Au(self):
         """Acurácia do usuário."""
-        self._Au = self._M.diagonal() / self.M("i+")
+        return self._M.diagonal() / self.M("i+")
 
     @property
     def kappa(self):
@@ -140,7 +140,7 @@ class ConfusionMatrix:
         v1 = self.Ag
         v2 = self.Aa
 
-        v3 = self._M.diagonal() * (self.M("i+") + self.M("+i"))
+        v3 = self._M.diagonal().T * (self.M("i+") + self.M("+i"))
         v3 = v3.sum() / (self.m ** 2)
         # v3 = sum(self.M(i, i) * (self.M("i+")[i] + self.M("+i")[i]) for i in range(self.c))
         # v3 /= (self.m ** 2)

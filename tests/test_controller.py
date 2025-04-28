@@ -1,7 +1,5 @@
 import unittest
-import math
 from server.controller import Controller
-import numpy as np
 
 
 class ControllerTestCase(unittest.TestCase):

@@ -1,0 +1,74 @@
+{% extends 'base.html.j2' %}
+
+{% block content %}
+
+<article>
+    <div class="hide-article visibility-button">
+        <i class="fa-solid fa-minus"></i>
+    </div>
+    <div class="show-article visibility-button">
+        <i class="fa-solid fa-plus"></i>
+    </div>
+    <header>
+        <h1><i class="fa-solid fa-subscript"></i> Equações</h1>
+    </header>
+    {% block equations %}{% endblock  %}
+</article>
+<article>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 1em;
+            text-align: center;
+        }
+
+        table {
+            margin: 0 auto 0 auto;
+        }
+
+        th {
+            font-weight: bolder;
+        }
+    </style>
+    <div class="hide-article visibility-button">
+        <i class="fa-solid fa-minus"></i>
+    </div>
+    <div class="show-article visibility-button">
+        <i class="fa-solid fa-plus"></i>
+    </div>
+    <header>
+        <h1><i class="fa-solid fa-table-cells-large"></i> Matrizes</h1>
+    </header>
+    {% block matrix %}{% endblock  %}
+</article>
+<article>
+    <div class="hide-article visibility-button">
+        <i class="fa-solid fa-minus"></i>
+    </div>
+    <div class="show-article visibility-button">
+        <i class="fa-solid fa-plus"></i>
+    </div>
+    <header>
+        <h1><i class="fa-solid fa-ruler"></i> Métricas</h1>
+    </header>
+    {% block metrics %}{% endblock  %}
+</article>
+<article>
+    <div class="hide-article visibility-button">
+        <i class="fa-solid fa-minus"></i>
+    </div>
+    <div class="show-article visibility-button">
+        <i class="fa-solid fa-plus"></i>
+    </div>
+    <header>
+        <h1><i class="fa-solid fa-square-poll-horizontal"></i> Resultados da classificação</h1>
+    </header>
+    {% block results %}{% endblock  %}
+</article>
+<nav>
+    <a href="{{url_for('datasets.get_dataset', dsid=dataset)}}"">&lt;&lt; Voltar</a>
+</nav>
+{% endblock %}
