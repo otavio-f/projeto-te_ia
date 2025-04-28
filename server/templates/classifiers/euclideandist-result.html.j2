@@ -6,7 +6,7 @@
 {% for cls in ("setosa", "versicolor", "virginica") %}
 <section>
     <h1>Classe <em class="capitalized">Iris {{ cls }}</em></h1>
-    <p>Equação: {{ data.classifier[cls].eq }}</p>
+    <p>Equação: $${{ data.classifier[cls].eq }}$$</p>
 </section>
 {% endfor %}
 {% endblock %}

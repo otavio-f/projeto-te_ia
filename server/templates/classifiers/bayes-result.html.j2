@@ -6,7 +6,7 @@
 {% for c1, c2 in data.classifier.keys() %}
 <section>
     <h1>Classe <em class="capitalized">Iris {{ c1 }}</em> x <em class="capitalized">Iris {{ c2 }}</em></h1>
-    <p>Equação de superfície: {{ data.classifier[(c1, c2)].eq }}</p>
+    <p>Equação de superfície: $${{ data.classifier[(c1, c2)].eq }}$$</p>
 </section>
 {% endfor %}
 {% endblock %}

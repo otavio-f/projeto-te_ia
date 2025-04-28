@@ -1,12 +1,14 @@
+import base64
 from collections import namedtuple
-from dataclasses import dataclass
-from dataclasses import field
 
+import io
 import itertools
 import random
 import os
 from typing import NamedTuple
+from matplotlib import pyplot as plt
 import numpy as np
+from PIL import Image, ImageChops
 
 from processors.dataset import DataSet, DataExtractor
 
@@ -145,6 +147,7 @@ class TrainResult(NamedTuple):
 
     bin_matrixes: dict[str, BinaryMatrix]
     "Matrizes binárias de cada classe"
+
 
     @staticmethod
     def create(classes: list[str], classifier: dict[str, Classifier], tests: list[ClassifiedSample]):

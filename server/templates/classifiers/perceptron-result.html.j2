@@ -7,7 +7,7 @@
 <section>
     <h1>Classe <em class="capitalized">Iris {{ c1 }}</em> x <em class="capitalized">Iris {{ c2 }}</em></h1>
     <p>Equação de superfície: {{ data.classifier[(c1, c2)].eq }}</p>
-    <p>Iterações: {{ data.classifier[(c1, c2)].iters }}</p>
+    <p>Iterações: $${{ data.classifier[(c1, c2)].iters }}$$</p>
 </section>
 {% endfor %}
 {% endblock %}
