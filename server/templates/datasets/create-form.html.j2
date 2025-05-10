@@ -30,6 +30,7 @@
                             <label for="column-{{ i+1 }}">{{ col }}</label>
                         </span>
                     {% endfor %}
+                    <input id="columns-toggle" type="button" value="Todas colunas"/>
                 </div>
 
                 <div class="form-group">
@@ -51,6 +52,7 @@
         padding: 1em 0;
     }
 
+    #
 </style>
 <script>
     /**
@@ -99,5 +101,17 @@
         document.querySelector('#train_status').textContent = ev.target.value + '%';
         document.querySelector('#test_status').textContent = 100 - Number(ev.target.value) + '%';
     });
+
+    /**
+    * Botão de selecionar todas colunas
+    */
+    document.querySelector("#columns-toggle").addEventListener('click', (ev) => {
+        const columnSelectors = Array.from(document.querySelectorAll(".col-selector"));
+        const selectAll = (ev.target.value === "Todas colunas");
+        columnSelectors.forEach((colElem) => {
+            colElem.checked = selectAll;
+        })
+        ev.target.value = selectAll?"Nenhuma coluna":"Todas colunas";
+    })
 </script>
 {% endblock %}
