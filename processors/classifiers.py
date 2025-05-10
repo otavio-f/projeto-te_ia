@@ -1,13 +1,12 @@
 """
-Classificadores e 
+Classificadores
 :author: Otávio Ferreira
 """
 
-from fractions import Fraction
-import math
 import numpy as np
 from dataclasses import dataclass
-from typing import Callable
+from typing import Collection
+import itertools
 
 
 @dataclass(frozen=True)
@@ -27,292 +26,358 @@ class ClassifiedSample:
     "Valor da classificação"
 
 
-@dataclass(frozen=True)
-class Classifier:
-    "Armazena o resultado do treinamento de um algoritmo de classificação."
+def convert_to_latex(i: int, xk: float, independent=False, hide_first_plus=True, variable="x") -> str:
+    """
+    Retorna uma representação do termo na equação, compatível com latex.
+
+    :param i: índice do termo
+    :param xk: multiplicador do termo
+    :param independente: se é um termo independente da variável
+    :param hide_first_plus: se True, esconde o sinal positivo do primeiro termo da equação
+    :param variable: nome da variável
+    """
+    if xk == 0:
+        return ""
     
-    eq: str
-    "Representação matemática da equação de classificação."
+    if xk < 0:
+        sign = "-"
+    elif i==0 and hide_first_plus:
+        sign = ""
+    else:
+        sign = "+"
     
-    func: Callable[[np.ndarray], float]
-    "Função de classificação que recebe um vetor e retorna um número"
+    if abs(xk) == 1 and not independent:
+        mul = ""
+    elif abs(xk - int(xk)) == 0: # é inteiro
+        mul = f"{abs(int(xk))}"
+    else:
+        mul = f"{str(abs(xk))}"
 
-    iters: int=-1
-    """Número de iterações necessárias para treino.
-    Valor negativo indica que o algoritmo não é iterativo."""
+    if independent:
+        term = ""
+    else:
+        term = f"{variable}_{{{i+1}}}"
+    
+    return f"{sign}{mul}{term}"
 
-    @staticmethod
-    def _augment(v: np.ndarray, aug: int|float) -> np.ndarray:
-        """
-        Aumenta um vetor.
+def augment(v: np.ndarray, aug: int|float) -> np.ndarray:
+    """
+    Aumenta um vetor com um termo.
 
-        :param aug: Argumento que irá aumentar o vetor
-        :returns: O vetor com o elemento aumentado ao final.
-        """
-        result = np.concat((v, [aug,]))
-        return result
+    :param v: Vetor que irá ser aumentado
+    :param aug: Número que irá aumentar o vetor
+    :returns: O vetor com o elemento aumentado ao final.
+    """
+    result = np.concat((v, [aug,]))
+    return result
 
-    @staticmethod
-    def _get_term(i: int, xk: float, independent=False, hide_first_plus=True, variable="x") -> str:
-        """
-        Retorna uma representação do termo na equação, compatível com latex.
+def to_matrix(v: np.ndarray) -> np.matrix:
+    """
+    Transforma o vetor em uma matriz coluna
 
-        :param i: índice do termo
-        :param xk: multiplicador do termo
-        :param independente: se é um termo independente da variável
-        :param hide_first_plus: se True, esconde o sinal positivo do primeiro termo da equação
-        :param variable: nome da variável
-        """
-        if xk == 0:
-            return ""
-        
-        if xk < 0:
-            sign = "-"
-        elif i==0 and hide_first_plus:
-            sign = ""
-        else:
-            sign = "+"
-        
-        if abs(xk) == 1 and not independent:
-            mul = ""
-        elif abs(xk - int(xk)) == 0: # é inteiro
-            mul = f"{abs(int(xk))}"
-        else:
-            mul = f"{str(abs(xk))}"
+    :param v: Vetor a ser transformado
+    :returns: Uma matriz coluna
+    """
+    return np.asmatrix(v).T
 
-        if independent:
-            term = ""
-        else:
-            term = f"{variable}_{{{i+1}}}"
-        
-        return f"{sign}{mul}{term}"
 
-    @staticmethod
-    def euclidean_dist(m: np.ndarray) -> 'Classifier':
-        """
-        Calcula a equação de distância euclideana.
+class UntrainedClassifier(Exception):
+    """Exceção que indica que um classificador não foi treinado."""
+    pass
 
-        :param m: O vetor característica.
-        :returns: Um classificador treinado.
-        """
-        eq = ""
-        
+
+class EuclideanDistance(object):
+    """Classificador de distância euclideana."""
+    def __init__(self):
+        pass
+    
+    def gen_latex(self):
+        self.latex = ""
         # x1² + x2² + ... xn²
-        for i, _ in enumerate(m):
-            eq += Classifier._get_term(i, 1, variable="x^{2}")
+        for i, _ in enumerate(self.m):
+            self.latex += convert_to_latex(i, 1, variable="x^{2}")
         
         # - 2*m1x1 - 2*m2x2 - ... - 2*mnxn
-        for i, mi in enumerate(m):
-            eq += Classifier._get_term(i, -2*mi, hide_first_plus=False)
+        for i, mi in enumerate(self.m):
+            self.latex += convert_to_latex(i, -2*mi, hide_first_plus=False)
         
         # m1² + m2² + ... + mn²
-        total = sum(mi**2 for mi in m)
-        eq += Classifier._get_term(1, total, independent=True, hide_first_plus=False)
+        total = sum(mi**2 for mi in self.m)
+        self.latex += convert_to_latex(1, total, independent=True, hide_first_plus=False)
         
-        eq = f"\\sqrt{{{eq}}}"
+        self.latex = f"\\sqrt{{{self.latex}}}"
 
-        # func = lambda x: math.sqrt((x - m).T * (x - m))
-        func = lambda x: np.sqrt((x - m).T.dot(x - m))
-        return Classifier(eq, func)
+    def fit(self, m: np.ndarray):
+        self.m = m
+        self.gen_latex()
 
-    @staticmethod
-    def max_dist(m: np.ndarray) -> 'Classifier':
-        """
-        Calcula a equação de classificador máximo.
+    def predict(self, x: np.ndarray) -> float:
+        if not hasattr(self, 'm'):
+            raise UntrainedClassifier("Classificador não foi treinado!")
+        
+        M = to_matrix(self.m)
+        X = to_matrix(x)
+        return np.sqrt((X - M).T * (X - M)).item()
 
-        :param m: O vetor característica.
-        :returns: Um classificador treinado.
-        """
-        eq = "".join(Classifier._get_term(i, mi) for i,mi in enumerate(m))
+
+class MinimumDistance(object):
+    """Classificador de distância mínima."""
+    def __init__(self):
+        pass
+    
+    def gen_latex(self):
+        self.latex = "".join(convert_to_latex(i, mi) for i,mi in enumerate(self.m))
 
         # extra = -1/2 * (m.T * m)
-        extra = -1/2 * m.T.dot(m)
-        eq += Classifier._get_term(1, extra, independent=True, hide_first_plus=False)
-        
-        # func = lambda x: (x.T * m) - (1/2 * (m.T * m))
-        func = lambda x: m.T.dot(x) - (1/2 * (m.dot(m)))
-        return Classifier(eq, func)
-
-    @staticmethod
-    def dij(mi: np.ndarray, mj: np.ndarray) -> 'Classifier':
-        """
-        Calcula a equação de superfície de decisão sobre duas classes
-        :param mi: Vetor característica da classe i
-        :param mj: Vetor característica da classe j
-        :returns: Um classificador treinado.
-        """
-        eq = "".join(Classifier._get_term(i, di) for i,di in enumerate(mi-mj))
-        
-        # extra = -1/2 * ((mi - mj).T * (mi + mj))
-        extra = -1/2 * (mi - mj).T.dot(mi + mj)
-        eq += Classifier._get_term(1, extra, independent=True, hide_first_plus=False)
-        
-        # func = lambda x: ((mi - mj).T * x) - 1/2 * ((mi - mj).T * (mi + mj))
-        func = lambda x: (mi - mj).T.dot(x) - 1/2 * (mi - mj).T.dot(mi + mj)
-        return Classifier(eq, func)
-
-    @staticmethod
-    def perceptron(c1v: list[np.ndarray], c2v: list[np.ndarray], max_iters=10_000, c=1) -> 'Classifier':
-        """
-        Calcula a equação sobre duas classes pelo método perceptron.
-
-        :param c1v: Conjunto de vetores de treinamento da classe 1
-        :param c2v: Conjunto de vetores de treinamento da classe 2
-        :param max_iters: O número máximo de iterações do algoritmo
-        :param c: O fator de randomização, recomendado usar valores entre 0 a 1
-        :returns: Um classificador treinado.
-        """
-        # inicializa pesos com vetor de zeros, aumentado de zero [0, 0, ..., 0]
-        w = np.zeros(len(c1v[0]) + 1)
-        
-        # alterna c1, c2, c1, c2
-        # aumenta vetores (..., 1)
-        train_vectors = [Classifier._augment(v, 1) for pair in zip(c1v, c2v) for v in pair]
-
-        # condição de parada: número máximo de iterações ou passos sem erro
-        # 5 passos sem mudança dos pesos (w) para o algoritmo
-        min_steps = 5
-        iters = 0
-        clean_steps = 0
-
-        # iteração
-        while iters < max_iters and clean_steps < min_steps:
-            for i, xk in enumerate(train_vectors):
-                iters += 1
-                # test = w * xk.T
-                test = w.dot(xk.T)
-                test_ok = (test > 0) if i%2==0 else (test < 0) # c1 (par) >0, c2 (ímpar) <0
-                if not test_ok:
-                    clean_steps = 0
-                    if i%2 == 0: # xk pertence a c1
-                        w = w + (c * xk)
-                    else: # xk pertence a c2
-                        w = w - (c * xk)
-                else:
-                    clean_steps += 1
-                if clean_steps > min_steps and iters > len(train_vectors):
-                    break
-
-        eq = ""
-        for i, wi in enumerate(w):
-            eq += Classifier._get_term(i, wi, i==len(w)-1)
+        extra = -1/2 * self.m @ self.m
+        self.latex += convert_to_latex(1, extra, independent=True, hide_first_plus=False)
         
 
-        func = lambda x: w.dot(Classifier._augment(x, 1))
-        # func = lambda x: w * augment(x, 1)
+    def fit(self, m: np.ndarray):
+        self.m = m
+        self.gen_latex()
 
-        return Classifier(eq, func, iters)
+    def predict(self, x: np.ndarray) -> float:
+        if not hasattr(self, 'm'):
+            raise UntrainedClassifier("Classificador não foi treinado!")
+        
+        M = to_matrix(self.m)
+        X = to_matrix(x)
+        result = (X.T * M) - (1/2 * (M.T * M))
+        return result.item()
 
-    @staticmethod
-    def delta_perceptron(c1v: list[np.ndarray], c2v: list[np.ndarray], max_iters=10_000, alpha=1) -> 'Classifier':
+
+class MinimumDistance2(object):
+    """Classificador de distância mínima com superfície de decisão."""
+    def __init__(self):
+        pass
+    
+    def gen_latex(self):
+        mi = self.mi
+        mj = self.mj
+
+        self.latex = "".join(convert_to_latex(i, mi) for i,mi in enumerate(mi - mj))
+
+        # extra = -1/2 * (m.T * m)
+        extra = -1/2 * (mi - mj).T @ (mi + mj)
+        self.latex += convert_to_latex(1, extra, independent=True, hide_first_plus=False)
+        
+
+    def fit(self, mi: np.ndarray, mj: np.ndarray):
+        self.mi = mi
+        self.mj = mj
+        self.gen_latex()
+
+    def predict(self, x: np.ndarray) -> float:
+        if not hasattr(self, 'mi'):
+            raise UntrainedClassifier("Classificador não foi treinado!")
+        
+        Mi = to_matrix(self.mi)
+        Mj = to_matrix(self.mj)
+        X = to_matrix(x)
+        result = (Mi - Mj).T * X - 1/2 * ((Mi - Mj).T * (Mi + Mj))
+        return result.item()
+
+
+class Perceptron(object):
+    """Classificador perceptron."""
+    def __init__(self, c: float, max_iters: int):
         """
-        Calcula a equação perceptron com regra delta sobre duas classes.
-
-        :param c1v: Conjunto de vetores de treinamento da classe 1
-        :param c2v: Conjunto de vetores de treinamento da classe 2
-        :param max_iters: O número máximo de iterações do algoritmo
-        :param alpha: O fator de randomização, recomendado usar valores entre 0.1 a 1
-        :returns: Um classificador treinado.
+        :param c: O fator de aprendizado, um número maior que 0 e menor ou igual a 1.
+        :param max_iters: O limite de iterações permitido, deve ser maior que zero.
         """
-        # inicializa pesos com vetor de zeros, aumentado de zero [0, 0, ..., 0]
-        w = np.zeros(len(c1v[0]) + 1)
+        if c <= 0 or c > 1:
+            raise ValueError("Valor de c fora do intervalo permitido!")
+        if max_iters <= 0 or type(max_iters) is not int:
+            raise ValueError("Valor inválido para o número máximo de iterações!")
+        self.c = c
+        self.max_iters = max_iters
+    
+    def gen_latex(self):
+        self.latex = ""
+        for i, wi in enumerate(self.w):
+            self.latex += convert_to_latex(i, wi, i==len(self.w)-1)
 
-        # erros acumulados
-        errors = []
+    def fit(self, Ci: Collection[np.ndarray], Cj: Collection[np.ndarray]):
+        # Inicializa pesos com vetor de zeros
+        W = np.zeros(len(Ci[0]) + 1)
 
         # alterna c1, c2, c1, c2
         # aumenta vetores (..., 1)
-        train_vectors = [Classifier._augment(v, 1) for pair in zip(c1v, c2v) for v in pair]
+        # vetores da classe 1 estão nos índices pares
+        # vetores da classe 2 estão nos índices ímpares
+        train_vectors = (augment(v, 1) for pair in zip(Ci, Cj) for v in pair)
 
-        # condição de parada
-        # erro < 0.1, iterações > 3
-        stop = False
+        self.errors = [] # erro de cada iteração
+        # True se houve erro, False se não houve
 
-        while len(errors) < max_iters and not stop:
-            for i, xk in enumerate(train_vectors):
-                r = 1 if i%2 == 0 else -1
+        for K, X in enumerate(itertools.cycle(train_vectors)):
+            # itera enquanto as condições de parada não foram atendidas
+            test = W.T @ X
+            if K%2 == 0:
+                # classe 1
+                if not test > 0:
+                    W = W + (self.c * X)
+                self.errors.append(not test > 0)
+            if K%2 == 1:
+                # classe 2
+                if not test < 0:
+                    W = W - (self.c * X)
+                self.errors.append(not test < 0)
                 
-                # err = 1/2 * ((r - w.T * xk) **2)
-                err = 1/2 * ((r - w.T.dot(xk))**2) # E(w)
-                errors.append(err)
+            if K > len(Ci)+len(Cj):
+                if not any(self.errors[-5:]):
+                    # pare se as últimas cinco iterações não tiveram erro
+                    self.w = W
+                    self.gen_latex()
+                    return
                 
-                # w = w + alpha * (r - (w.T*xk)) * xk
-                w = w + alpha * (r - w.T.dot(xk)) * xk
+            if K >= self.max_iters:
+                # pare quando superar o limite de iterações
+                # nesse caso não converge
+                self.w = W
+                self.gen_latex()
+                return
 
-                # extrai média dos 2 últimos erros
-                total_err = sum(errors[-2:])/2
-
-                # pára se o erro é menor que o aceitável
-                # e se os vetores de treino foram usados pelo menos uma vez
-                if total_err <= 0.1 and len(errors) > len(train_vectors):
-                    stop = True
-                    break
-
-        eq = ""
-        for i, wi in enumerate(w):
-            eq += Classifier._get_term(i, wi, i==len(w)-1)
+    def predict(self, x: np.ndarray) -> float:
+        if not hasattr(self, 'w'):
+            raise UntrainedClassifier("Classificador não foi treinado!")
         
-        func = lambda x: w.dot(Classifier._augment(x, 1))
-        # func = lambda x: w * augment(x, 1)
-        
-        return Classifier(eq, func, len(errors))
+        W = to_matrix(self.w)
+        X = to_matrix(augment(x, 1))
+        return (W.T * X).item()
+    
+    @property
+    def iterations(self):
+        return len(self.errors)
 
 
-    @staticmethod
-    def bayes(civ: list[np.ndarray], cjv: list[np.ndarray], mi: np.ndarray, mj: np.ndarray) -> 'Classifier':
+class PerceptronDelta(object):
+    """Classificador perceptron com regra delta."""
+    def __init__(self, alpha: float, max_iters: int):
         """
-        Calcula a equação de bayes para a classe.
-        
-        :param civ: Conjunto de vetores de treino para a classe 1.
-        :param cjv: Conjunto de vetores de treino para a classe 2.
-        :param mi: Vetor característica da classe 1.
-        :param mj: Vetor característica da classe 2.
+        :param alpha: O fator de aprendizado, um número maior que 0 e menor ou igual a 1.
+        :param max_iters: O limite de iterações permitido, deve ser maior que zero.
         """
-        def _bayes(vall: list[np.ndarray], m: np.ndarray) -> tuple[np.ndarray, float]:
-            """
-            Calcula a equação de bayes para uma classe.
-            
-            :param vall: O conjunto de vetores de treino.
-            :param m: Vetor característica.
-            :returns: O conjunto de fatores que multiplicam x e o termo independente -1/2 * mT * E * m
-            """
-            m = np.asmatrix(m)
-            # precálculo de (m * m.T)
-            m_mT = m.T * m
+        if alpha <= 0 or alpha > 1:
+            raise ValueError("Valor de c fora do intervalo permitido!")
+        if max_iters <= 0 or type(max_iters) is not int:
+            raise ValueError("Valor inválido para o número máximo de iterações!")
+        self.alpha = alpha
+        self.max_iters = max_iters
+    
+    def gen_latex(self):
+        self.latex = ""
+        for i, wi in enumerate(self.w):
+            self.latex += convert_to_latex(i, wi, i==len(self.w)-1)
 
-            # somatório (x * x.T) - (m * m.T)
-            E = np.asmatrix(np.zeros(m_mT.shape)) # inicializa vetor NxN de zeros
-            for vector in vall:
-                x = np.asmatrix(vector)
-                x_xT = x.T * x
-                E += x_xT - m_mT
+    def fit(self, Ci: Collection[np.ndarray], Cj: Collection[np.ndarray]):
+        # Inicializa pesos com vetor de zeros
+        W = np.zeros(len(Ci[0]) + 1)
+        alpha = self.alpha
 
-            # multiplica por 1/n
-            n = len(vall)
-            E = (1/n) * E
+        # alterna c1, c2, c1, c2
+        # aumenta vetores (..., 1)
+        # vetores da classe 1 estão nos índices pares
+        # vetores da classe 2 estão nos índices ímpares
+        train_vectors = (augment(v, 1) for pair in zip(Ci, Cj) for v in pair)
 
-            indep = -(1/2) * (m * E.I * m.T).item() # .item() extrai o único elemento da matriz 1x1
-            factors = (E.I * m.T).A.flatten() # .A.flatten() converte pra array simples
-            return factors, indep
+        self.errors = []
+
+        # itera enquanto as condições de parada não foram atendidas
+        for K, X in enumerate(itertools.cycle(train_vectors)):
+            if K%2 == 0: # índice par, classe 1
+                R = 1
+            if K%2 == 1: # índice ímpar, classe 2
+                R = -1
+            err = 1/2 * ((R - W.T @ X) ** 2)
+            self.errors.append(err)
+
+            W = W + alpha * (R - W.T @ X) * X
+
+            if K > len(Ci)+len(Cj):
+                if np.mean(self.errors[-3:]) < 0.1:
+                    # pare se as últimas cinco iterações tiveram erro baixo
+                    self.w = W
+                    self.gen_latex()
+                    return
+
+            if K > self.max_iters:
+                # pare quando superar o limite de iterações
+                # nesse caso não converge
+                self.w = W
+                self.gen_latex()
+                return
+
+
+    def predict(self, x: np.ndarray) -> float:
+        if not hasattr(self, 'w'):
+            raise UntrainedClassifier("Classificador não foi treinado!")
         
-        # obtém d1(x) e d2(x)
-        # d(x) é dividido em parte que multiplica X (xT E...)
-        # e d_extra é a parte independente de X (-1/2...)
-        d1x, d1extra = _bayes(civ, mi) # d1x primeira parte, d1i termo independente
-        d2x, d2extra = _bayes(cjv, mj)
+        W = to_matrix(self.w)
+        X = to_matrix(augment(x, 1))
+        return (W.T * X).item()
 
-        # calcula d1(x) - d2(x)
-        djx = d1x - d2x # transforma em um np.array
-        extra = d1extra - d2extra # (-1/2...), não depende de X
+    @property
+    def iterations(self):
+        return len(self.errors)
 
-        func = lambda x: djx.dot(x) + extra
+class Bayes(object):
+    """Classificador de distância mínima."""
+    def __init__(self):
+        pass
+    
+    def gen_latex(self):
+        Mi = to_matrix(self.mi)
+        Mj = to_matrix(self.mj)
+        
+        x_terms = (self.cov_i.I * Mi) - (self.cov_j.I * Mj)
 
-        # constroi versão legível
-        eq = ""
-        for i, wi in enumerate(djx):
-            eq += Classifier._get_term(i, wi)
+        self.latex = "".join(convert_to_latex(i, xi) for i,xi in enumerate(x_terms.A1))
+        
+        extra = (np.log(self.prob_i) - np.log(self.prob_j))
+        extra += (-1/2 * (Mi.T * self.cov_i.I * Mi)) - (-1/2 * (Mj.T * self.cov_j.I * Mj)).item()
 
-        # adiciona termo extra a versão legível
-        eq += Classifier._get_term(1, extra, independent=True)
+        self.latex += convert_to_latex(1, extra, independent=True, hide_first_plus=False)
+        
+        
+    def get_covariance_matrix(self, train_vectors: list[np.ndarray], m: np.ndarray) -> np.matrix:
+        # inicialização
+        M = to_matrix(m)
+        E = np.asmatrix(np.zeros((M * M.T).shape))
 
-        return Classifier(eq, func)
+        # somatório
+        for v in train_vectors:
+            X = to_matrix(v)
+            E += (X * X.T) - (M * M.T)
+
+        n = len(train_vectors)
+        return 1/n * E
+
+    def fit(self, train_Ci: Collection[np.ndarray], train_Cj: Collection[np.ndarray], prob_Ci: float, prob_Cj: float):
+        self.prob_i = prob_Ci
+        self.prob_j = prob_Cj
+
+        self.mi = np.mean(train_Ci, axis=0)
+        self.mj = np.mean(train_Cj, axis=0)
+
+        self.ci = train_Ci
+        self.cj = train_Cj
+
+        self.cov_i = self.get_covariance_matrix(train_Ci, self.mi)
+        self.cov_j = self.get_covariance_matrix(train_Cj, self.mj)
+
+        self.gen_latex()
+
+
+    def predict(self, x: np.ndarray) -> float:
+        if not hasattr(self, 'mi'):
+            raise UntrainedClassifier("Classificador não foi treinado!")
+        
+        Mi = to_matrix(self.mi)
+        Mj = to_matrix(self.mj)
+        X = to_matrix(x)
+
+        di = np.log(self.prob_i) + (X.T * self.cov_i.I * Mi) - (1/2 * Mi.T * self.cov_i.I * Mi)
+        dj = np.log(self.prob_j) + (X.T * self.cov_j.I * Mj) - (1/2 * Mj.T * self.cov_j.I * Mj)
+        return (di - dj).item()

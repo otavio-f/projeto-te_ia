@@ -6,7 +6,7 @@
 {% for c1, c2 in data.classifier.keys() %}
 <section>
     <h1>Classe <em class="capitalized">Iris {{ c1 }}</em> x <em class="capitalized">Iris {{ c2 }}</em></h1>
-    <p>Equação de superfície: $${{ data.classifier[(c1, c2)].eq }}$$</p>
+    <p>Equação de superfície: $${{ data.classifier[(c1, c2)].latex }}$$</p>
 </section>
 {% endfor %}
 {% endblock %}
@@ -16,23 +16,28 @@
     <h1>Matriz de confusão</h1>
     <table>
         <tr>
-            <th>&darr;Expectativa/&rarr;Predição</th>
+            <th></th>
             {% for row in data.matrix.classes %}
-            <th>{{ row }}</th>
+            <th>{{ row }} <span class="mini">e</span></th>
             {% endfor %}
-            <th>total</th>
+            <th>total <span class="mini">e</span></th>
         </tr>
         
         {% for i, row in data.matrix.classes|enumerate %}
         <tr>
-            <th>{{ row }}</th>
+            <th>{{ row }} <span class="mini">p</span></th>
             {% for j, col in data.matrix.classes|enumerate %}
             <td>{{ data.matrix.M(i, j) }}</td>
             {% endfor %}
+            <td>{{ data.matrix.M("i+")[i]}}</td>
         </tr>
         {% endfor %}
         <tr>
-            <th>totals</th>
+            <th>total <span class="mini">p</span></th>
+            {% for j, col in data.matrix.classes|enumerate %}
+            <td>{{ data.matrix.M("+i")[j]}}</td>
+            {% endfor %}
+            <td>{{ data.matrix.m}}</td>
         </tr>
     </table>
 </section>

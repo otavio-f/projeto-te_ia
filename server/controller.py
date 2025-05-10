@@ -1,18 +1,14 @@
-import base64
 from collections import namedtuple
 
-import io
 import itertools
 import random
 import os
-from typing import NamedTuple
-from matplotlib import pyplot as plt
+from typing import Any, NamedTuple
 import numpy as np
-from PIL import Image, ImageChops
 
+from processors.classifiers import Bayes, EuclideanDistance, MinimumDistance, MinimumDistance2, Perceptron, PerceptronDelta
 from processors.dataset import DataSet, DataExtractor
 
-from processors.classifiers import Classifier
 from processors.evaluators import ConfusionMatrix
 from processors.evaluators import BinaryMatrix
 
@@ -136,7 +132,7 @@ class DataSetInfo(NamedTuple):
 class TrainResult(NamedTuple):
     """Representa o resultado do teste de um algoritmo de classificação."""
 
-    classifier: dict[str, Classifier]
+    classifier: dict[str, Any]
     "O algoritmo de classificação treinado."
     
     tests: list[ClassifiedSample]
@@ -150,7 +146,7 @@ class TrainResult(NamedTuple):
 
 
     @staticmethod
-    def create(classes: list[str], classifier: dict[str, Classifier], tests: list[ClassifiedSample]):
+    def create(classes: list[str], classifier: dict[str, Any], tests: list[ClassifiedSample]):
         """
         Compila dados em um resumo de treino.
         
@@ -261,13 +257,15 @@ class Controller(NamedTuple):
         classifiers = dict()
         for cls in dataset.classes:
             m = dataset.train_set[cls].m
-            classifiers[cls] = Classifier.euclidean_dist(m)
+            euc_dist = EuclideanDistance()
+            euc_dist.fit(m)
+            classifiers[cls] = euc_dist
         
         # classifica os vetores de teste
         tests = []
         for sample in dataset.test_set:
             distances = {
-                cls: classifiers[cls].func(sample.data)
+                cls: classifiers[cls].predict(sample.data)
                 for cls in dataset.classes
                 }
             mindist = min(distances.values()) # valor de distância mínima
@@ -297,13 +295,15 @@ class Controller(NamedTuple):
         classifiers = dict()
         for cls in dataset.classes:
             m = dataset.train_set[cls].m
-            classifiers[cls] = Classifier.max_dist(m)
+            max_min = MinimumDistance()
+            max_min.fit(m)
+            classifiers[cls] = max_min
         
         # armazena os vetores de teste classificados
         tests = []
         for sample in dataset.test_set:
             distances = {
-                cls: classifiers[cls].func(sample.data)
+                cls: classifiers[cls].predict(sample.data)
                 for cls in dataset.classes
                 }
             maxval = max(distances.values()) # valor de distância mínima
@@ -337,7 +337,9 @@ class Controller(NamedTuple):
         for c1, c2 in combinations:
             mi = dataset.train_set[c1].m
             mj = dataset.train_set[c2].m
-            classifiers[(c1, c2)] = Classifier.dij(mi, mj)
+            dij_surface = MinimumDistance2()
+            dij_surface.fit(mi, mj)
+            classifiers[(c1, c2)] = dij_surface
         
         # armazena os vetores de teste classificados
         # TODO: generalizar para mais de três classes
@@ -345,13 +347,13 @@ class Controller(NamedTuple):
         for sample in dataset.test_set:
             # primeira classificação usa o primeiro classificador encontrado
             c1, c2 = combinations[0]
-            value = classifiers[(c1, c2)].func(sample.data)
+            value = classifiers[(c1, c2)].predict(sample.data)
             predict = c1 if value > 0 else c2
             # escolhe o próximo par de classes do classificador
             c1, c2 = next(pair for pair in combinations # par de classes
                           if predict in pair            # par contém a classe prevista
                           and pair != (c1, c2) and pair != (c2, c1)) # par não foi usado
-            value = classifiers[(c1, c2)].func(sample.data)
+            value = classifiers[(c1, c2)].predict(sample.data)
             predict = c1 if value > 0 else c2
             # resultado da amostra
             csample = ClassifiedSample(sample.data, sample.cls,
@@ -381,13 +383,12 @@ class Controller(NamedTuple):
         # calcula as superfícies de decisão de cada par de classes
         classifiers = dict()
         for c1, c2 in combinations:
-            ci = dataset.train_set[c1]
-            cj = dataset.train_set[c2]
-            classifiers[(c1, c2)] = Classifier.bayes(
-                ci.lines.tolist(),
-                cj.lines.tolist(),
-                ci.m,
-                cj.m)
+            ci = dataset.train_set[c1].lines.tolist()
+            cj = dataset.train_set[c2].lines.tolist()
+            prob_ci = prob_cj = 50/150
+            bay = Bayes()
+            bay.fit(ci, cj, prob_ci, prob_cj)
+            classifiers[(c1, c2)] = bay
         
         # armazena os vetores de teste classificados
         # TODO: generalizar para mais de três classes
@@ -395,7 +396,7 @@ class Controller(NamedTuple):
         for sample in dataset.test_set:
             # primeira classificação usa o primeiro classificador encontrado
             c1, c2 = combinations[0]
-            value = classifiers[(c1, c2)].func(sample.data)
+            value = classifiers[(c1, c2)].predict(sample.data)
             predict = c1 if value > 0 else c2
             # escolhe o próximo par de classes do classificador
             c1, c2 = next(pair for pair in combinations # par de classes
@@ -433,7 +434,9 @@ class Controller(NamedTuple):
         for c1, c2 in combinations:
             c1v = dataset.train_set[c1].lines
             c2v = dataset.train_set[c2].lines
-            classifiers[(c1, c2)] = Classifier.perceptron(c1v, c2v, max_iters)
+            percep = Perceptron(1, max_iters)
+            percep.fit(c1v, c2v)
+            classifiers[(c1, c2)] = percep
         
         # armazena os vetores de teste classificados
         # TODO: generalizar para mais de três classes
@@ -441,13 +444,13 @@ class Controller(NamedTuple):
         for sample in dataset.test_set:
             # primeira classificação usa o primeiro classificador encontrado
             c1, c2 = combinations[0]
-            value = classifiers[(c1, c2)].func(sample.data)
+            value = classifiers[(c1, c2)].predict(sample.data)
             predict = c1 if value > 0 else c2
             # escolhe o próximo par de classes do classificador
             c1, c2 = next(pair for pair in combinations # par de classes
                           if predict in pair            # par contém a classe prevista
                           and pair != (c1, c2) and pair != (c2, c1)) # par não foi usado
-            value = classifiers[(c1, c2)].func(sample.data)
+            value = classifiers[(c1, c2)].predict(sample.data)
             predict = c1 if value > 0 else c2
             # resultado da amostra
             csample = ClassifiedSample(sample.data, sample.cls,
@@ -480,7 +483,9 @@ class Controller(NamedTuple):
         for c1, c2 in combinations:
             c1v = dataset.train_set[c1].lines
             c2v = dataset.train_set[c2].lines
-            classifiers[(c1, c2)] = Classifier.delta_perceptron(c1v, c2v, max_iters)
+            percep_delta = PerceptronDelta(0.01, max_iters)
+            percep_delta.fit(c1v, c2v)
+            classifiers[(c1, c2)] = percep_delta
         
         # armazena os vetores de teste classificados
         # TODO: generalizar para mais de três classes
@@ -488,13 +493,13 @@ class Controller(NamedTuple):
         for sample in dataset.test_set:
             # primeira classificação usa o primeiro classificador encontrado
             c1, c2 = combinations[0]
-            value = classifiers[(c1, c2)].func(sample.data)
+            value = classifiers[(c1, c2)].predict(sample.data)
             predict = c1 if value > 0 else c2
             # escolhe o próximo par de classes do classificador
             c1, c2 = next(pair for pair in combinations # par de classes
                           if predict in pair            # par contém a classe prevista
                           and pair != (c1, c2) and pair != (c2, c1)) # par não foi usado
-            value = classifiers[(c1, c2)].func(sample.data)
+            value = classifiers[(c1, c2)].predict(sample.data)
             predict = c1 if value > 0 else c2
             # resultado da amostra
             csample = ClassifiedSample(sample.data, sample.cls,
